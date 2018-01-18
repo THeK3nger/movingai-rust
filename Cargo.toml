@@ -1,0 +1,6 @@
+[package]
+name = "movingai"
+version = "0.1.0"
+authors = ["Davide Aversa <thek3nger@gmail.com>"]
+
+[dependencies]
