@@ -11,6 +11,25 @@ pub trait Map2D<T> {
     fn get_width(&self) -> usize;
 
     /// In every Map2D must be possible to get an item.
+    ///
+    /// ## Arguments:
+    ///  * `coords` (Coords2D) : A tuple representing the desired coordinates.
+    ///
+    /// ## Examples:
+    ///
+    /// ```rust
+    /// use movingai::Map2D;
+    /// use movingai::MovingAiMap;
+    ///
+    /// let mm = MovingAiMap::create(
+    ///        String::from("test"),
+    ///        54,
+    ///        56,
+    ///        vec!['.'; 54*56]
+    ///    );
+    /// let result = mm.get_cell((23,4));
+    /// assert_eq!(*result, '.')
+    /// ```
     fn get_cell(&self, coords: Coords2D) -> &T;
 
 }
@@ -24,6 +43,19 @@ pub struct MovingAiMap {
     map: Vec<char>
 }
 
+impl MovingAiMap {
+
+    pub fn create(map_type: String, height: usize, width: usize, map: Vec<char>) -> MovingAiMap {
+        if (map.len() != height*width) {
+            panic!("Given vector is not compatible with passed `width` and `height`.");
+        }
+        MovingAiMap {
+            map_type, height, width, map
+        }
+    }
+
+}
+
 impl Map2D<char> for MovingAiMap {
 
     fn get_width(&self) -> usize { self.width }
@@ -31,8 +63,7 @@ impl Map2D<char> for MovingAiMap {
     fn get_height(&self) -> usize { self.height }
     
     fn get_cell(&self, coords: Coords2D) -> &char {
-        let idx = coords.1*self.width + coords.0;
-        return &self.map[idx];
+        &self.map[coords.1*self.get_width() + coords.0]
     }
 
 }
@@ -50,9 +81,11 @@ impl Index<Coords2D> for MovingAiMap  {
 
 mod parser {
 
-    pub fn parse_file(path: String) -> MovingAiMap {
+    use MovingAiMap;
 
-    }
+    // pub fn parse_file(path: String) -> MovingAiMap {
+
+    // }
 
 }
 
