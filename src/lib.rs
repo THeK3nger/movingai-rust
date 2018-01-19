@@ -34,7 +34,6 @@ pub trait Map2D<T> {
 
 }
 
-
 /// An immutable representation of a MovingAI map.
 pub struct MovingAiMap {
     map_type: String,
@@ -46,7 +45,7 @@ pub struct MovingAiMap {
 impl MovingAiMap {
 
     pub fn create(map_type: String, height: usize, width: usize, map: Vec<char>) -> MovingAiMap {
-        if (map.len() != height*width) {
+        if map.len() != height*width {
             panic!("Given vector is not compatible with passed `width` and `height`.");
         }
         MovingAiMap {
@@ -81,18 +80,60 @@ impl Index<Coords2D> for MovingAiMap  {
 
 mod parser {
 
+    use std::fs::File;
+    use std::io::prelude::*;
     use MovingAiMap;
 
-    // pub fn parse_file(path: String) -> MovingAiMap {
+    pub fn parse_file(path: &str) -> Result<MovingAiMap, &'static str> {
+        let mut file = match File::open(path) {
+            Ok(f) => f,
+            Err(err) => {
+                panic!("Errore opening file {:?}", err);
+            }
+        };
+        let mut contents = String::new();
+        file.read_to_string(&mut contents);
 
-    // }
+        let mut height: usize = 0;
+        let mut width: usize = 0;
+        let mut map_type: String = String::from("empty");
+        let mut map: Vec<char> = Vec::new();
+
+        let mut parse_map = false;
+        for line in contents.lines() {
+            if parse_map {
+                for c in line.chars() {
+                    map.push(c);
+                }
+                continue;
+            }
+            if line.trim() == "map" {
+                parse_map = true;
+            }
+            else {
+                let param: Vec<&str> = line.split(" ").collect();
+                if param.len() == 2 {
+                    let key = param[0];
+                    let value = param[1];
+                    if key == "type" { map_type = String::from(value); }
+                    else if key == "height" { height = value.parse::<usize>().unwrap(); }
+                    else if key == "width" { width = value.parse::<usize>().unwrap(); }
+                }
+            }
+        }
+        return Ok(MovingAiMap::create(
+            map_type, height, width, map
+        ));
+    }
 
 }
 
 #[cfg(test)]
 mod tests {
 
+    use Map2D;
     use MovingAiMap;
+    use parser::parse_file;
 
     #[test]
     fn indexing() {
@@ -103,5 +144,11 @@ mod tests {
             map: vec!['.'; 4*6]
         };
         assert_eq!(test[(0,3)], '.');
+    }
+
+    #[test]
+    fn parsing() {
+        let map = parse_file("./test/arena.map").unwrap();
+        assert_eq!(map.get_width(), 49 );
     }
 }
