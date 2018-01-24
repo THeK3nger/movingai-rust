@@ -2,7 +2,7 @@
 
 **Still a very experimental crate!**
 
-Map/Scenario Parser for the [MovingAI benchmark](http://www.movingai.com/benchmarks) format. It offers a quick way to parse scenary file and map files, plus some map utility to manage and query information from maps and scenes.
+Map/Scenario Parser for the [MovingAI benchmark](http://www.movingai.com/benchmarks) format. It offers a quick way to parse scenario and map files, plus some map utility to manage and query information from them.
 
 ## How to use
 
