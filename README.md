@@ -1,4 +1,6 @@
 # movingai-rust
+![Travis Build](https://api.travis-ci.org/THeK3nger/movingai-rust.svg?branch=master)
+![Cargo Version](https://img.shields.io/crates/v/movingai.svg)
 
 **Still a very experimental crate!**
 
