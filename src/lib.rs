@@ -44,7 +44,7 @@ pub struct MovingAiMap {
 
 impl MovingAiMap {
 
-    pub fn create(map_type: String, height: usize, width: usize, map: Vec<char>) -> MovingAiMap {
+    pub fn new(map_type: String, height: usize, width: usize, map: Vec<char>) -> MovingAiMap {
         if map.len() != height*width {
             panic!("Given vector is not compatible with passed `width` and `height`.");
         }
