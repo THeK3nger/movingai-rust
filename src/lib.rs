@@ -21,7 +21,7 @@ pub trait Map2D<T> {
     /// use movingai::Map2D;
     /// use movingai::MovingAiMap;
     ///
-    /// let mm = MovingAiMap::create(
+    /// let mm = MovingAiMap::new(
     ///        String::from("test"),
     ///        54,
     ///        56,
@@ -155,7 +155,7 @@ pub mod parser {
                 }
             }
         }
-        return Ok(MovingAiMap::create(
+        return Ok(MovingAiMap::new(
             map_type, height, width, map
         ));
     }
