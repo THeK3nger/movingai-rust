@@ -1,6 +1,6 @@
 use std::ops::Index;
 
-type Coords2D = (usize, usize);
+pub type Coords2D = (usize, usize);
 
 pub trait Map2D<T> {
     
@@ -82,10 +82,8 @@ pub struct SceneRecord {
     map_file: String,
     map_width: usize,
     map_height: usize,
-    start_x: usize,
-    start_y: usize,
-    goal_x: usize,
-    goal_y: usize,
+    start_pos: Coords2D,
+    goal_pos: Coords2D,
     optimal_length: f64
 }
 
@@ -164,10 +162,8 @@ mod parser {
                 map_file: String::from(record[1]),
                 map_width: record[2].parse::<usize>().unwrap(),
                 map_height: record[3].parse::<usize>().unwrap(),
-                start_x: record[4].parse::<usize>().unwrap(),
-                start_y: record[5].parse::<usize>().unwrap(),
-                goal_x: record[6].parse::<usize>().unwrap(),
-                goal_y: record[7].parse::<usize>().unwrap(),
+                start_pos: (record[5].parse::<usize>().unwrap(), record[4].parse::<usize>().unwrap()),
+                goal_pos: (record[7].parse::<usize>().unwrap(), record[6].parse::<usize>().unwrap()),
                 optimal_length: record[8].parse::<f64>().unwrap()
             })
         }
@@ -206,6 +202,6 @@ mod tests {
     #[test]
     fn parsing_scene() {
         let scen = parse_scen_file("./test/arena2.map.scen").unwrap();
-        assert_eq!(scen[3].start_x,102);
+        assert_eq!(scen[3].start_pos,(165, 102));
     }
 }
