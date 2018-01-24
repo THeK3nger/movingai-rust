@@ -4,11 +4,15 @@ description = "MovingAI Benchmark Map/Scen File Parser"
 version = "0.1.0"
 authors = ["Davide Aversa <thek3nger@gmail.com>"]
 keywords = ["pathfinding", "benchmark", "parser"]
+categories = ["parsing", "science", "simulation"]
 homepage = "https://github.com/THeK3nger/movingai-rust"
+repository = "https://github.com/THeK3nger/movingai-rust"
+readme = "README.md"
 license = "MIT"
 
 [badges]
 
 maintenance = { status = "experimental" }
+travis-ci = { repository = "THeK3nger/movingai-rust", branch = "master" }
 
 [dependencies]
