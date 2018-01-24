@@ -87,13 +87,27 @@ pub struct SceneRecord {
     optimal_length: f64
 }
 
-mod parser {
+pub mod parser {
 
     use std::fs::File;
     use std::io::prelude::*;
     use MovingAiMap;
     use SceneRecord;
 
+    /// Parse a MovingAI `.map` file.
+    /// 
+    /// ## Arguments:
+    ///  * `path` (&str) Path to the file location.
+    ///
+    /// ## Returns:
+    ///  * Result<MovingAiMap, &str> the parsed map.
+    ///
+    /// ## Example:
+    /// ```
+    /// use movingai::parser::parse_map_file;
+    ///
+    /// let map = parse_map_file("./test/arena.map").unwrap();
+    /// ```
     pub fn parse_map_file(path: &str) -> Result<MovingAiMap, &'static str> {
         let mut file = match File::open(path) {
             Ok(f) => f,
@@ -136,6 +150,20 @@ mod parser {
         ));
     }
 
+    /// Parse a MovingAI `.scen` file.
+    /// 
+    /// ## Arguments:
+    ///  * `path` (&str) Path to the file location.
+    ///
+    /// ## Returns:
+    ///  * Result<Vec<SceneRecord, &str> the parsed map.
+    ///
+    /// ## Example:
+    /// ```
+    /// use movingai::parser::parse_scen_file;
+    ///
+    /// let scen = parse_scen_file("./test/arena2.map.scen").unwrap();
+    /// ```
     pub fn parse_scen_file(path: &str) -> Result<Vec<SceneRecord>, &'static str> {
         let mut file = match File::open(path) {
             Ok(f) => f,
