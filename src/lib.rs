@@ -77,7 +77,7 @@ impl Index<Coords2D> for MovingAiMap  {
     
 }
 
-struct SceneRecord {
+pub struct SceneRecord {
     bucket: u32,
     map_file: String,
     map_width: usize,
@@ -100,7 +100,7 @@ mod parser {
         let mut file = match File::open(path) {
             Ok(f) => f,
             Err(err) => {
-                panic!("Errore opening file {:?}", err);
+                panic!("Errore opening file {}", err);
             }
         };
         let mut contents = String::new();
@@ -138,8 +138,42 @@ mod parser {
         ));
     }
 
-    fn parse_scen_file(path: &str) -> Vec<SceneRecord> {
-            return Vec::new();
+    pub fn parse_scen_file(path: &str) -> Result<Vec<SceneRecord>, &'static str> {
+        let mut file = match File::open(path) {
+            Ok(f) => f,
+            Err(err) => {
+                panic!("Errore opening file {}", err);
+            }
+        };
+        let mut contents = String::new();
+        file.read_to_string(&mut contents);
+
+        let mut table: Vec<SceneRecord> = Vec::new();
+
+        for line in contents.lines() {
+            if line.starts_with("version") {
+                continue;
+            }
+            if (line.is_empty()) {
+                continue;
+            }
+            let record: Vec<&str> = line.split("\t").collect();
+            println!("{:?}", record);
+            table.push(SceneRecord {
+                bucket:  record[0].parse::<u32>().unwrap(),
+                map_file: String::from(record[1]),
+                map_width: record[2].parse::<usize>().unwrap(),
+                map_height: record[3].parse::<usize>().unwrap(),
+                start_x: record[4].parse::<usize>().unwrap(),
+                start_y: record[5].parse::<usize>().unwrap(),
+                goal_x: record[6].parse::<usize>().unwrap(),
+                goal_y: record[7].parse::<usize>().unwrap(),
+                optimal_length: record[8].parse::<f64>().unwrap()
+            })
+        }
+
+        return Ok(table);
+
     }
 
 }
@@ -150,6 +184,7 @@ mod tests {
     use Map2D;
     use MovingAiMap;
     use parser::parse_map_file;
+    use parser::parse_scen_file;
 
     #[test]
     fn indexing() {
@@ -163,8 +198,14 @@ mod tests {
     }
 
     #[test]
-    fn parsing() {
+    fn parsing_map() {
         let map = parse_map_file("./test/arena.map").unwrap();
         assert_eq!(map.get_width(), 49 );
+    }
+
+    #[test]
+    fn parsing_scene() {
+        let scen = parse_scen_file("./test/arena2.map.scen").unwrap();
+        assert_eq!(scen[3].start_x,102);
     }
 }
