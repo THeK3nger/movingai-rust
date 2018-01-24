@@ -77,6 +77,7 @@ impl Index<Coords2D> for MovingAiMap  {
     
 }
 
+/// Represent a row (scene) in a scene file.
 pub struct SceneRecord {
     bucket: u32,
     map_file: String,
@@ -87,6 +88,7 @@ pub struct SceneRecord {
     optimal_length: f64
 }
 
+/// Contains all the parser functions.
 pub mod parser {
 
     use std::fs::File;
@@ -96,13 +98,21 @@ pub mod parser {
 
     /// Parse a MovingAI `.map` file.
     /// 
-    /// ## Arguments:
-    ///  * `path` (&str) Path to the file location.
+    /// # Arguments
+    ///  * `path` represents the path to the file location.
     ///
-    /// ## Returns:
-    ///  * Result<MovingAiMap, &str> the parsed map.
+    /// # Returns
+    ///  It returns the parsed map as a `MovingAiMap` or an `Err`.
     ///
-    /// ## Example:
+    /// # Panics
+    ///  For the time, it panics if the map format it is not correct.
+    ///  TODO: Catch all these errors and encode them into `Result`.
+    ///
+    /// # Errors
+    ///  Return errors if it is not possible to open the specified file.
+    ///
+    /// # Examples
+    ///
     /// ```
     /// use movingai::parser::parse_map_file;
     ///
@@ -152,13 +162,21 @@ pub mod parser {
 
     /// Parse a MovingAI `.scen` file.
     /// 
-    /// ## Arguments:
-    ///  * `path` (&str) Path to the file location.
+    /// # Arguments
+    ///  * `path` represents the path to the file location.
     ///
-    /// ## Returns:
-    ///  * Result<Vec<SceneRecord, &str> the parsed map.
+    /// # Returns
+    ///  It returns the parsed map as a `Vec<SceneRecord>` or an `Err`.
     ///
-    /// ## Example:
+    /// # Panics
+    ///  For the time, it panics if the map format it is not correct.
+    ///  TODO: Catch all these errors and encode them into `Result`.
+    ///
+    /// # Errors
+    ///  Return errors if it is not possible to open the specified file.
+    ///
+    /// # Examples
+    ///
     /// ```
     /// use movingai::parser::parse_scen_file;
     ///
