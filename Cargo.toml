@@ -1,6 +1,14 @@
 [package]
 name = "movingai"
+description = "MovingAI Benchmark Map/Scen File Parser"
 version = "0.1.0"
 authors = ["Davide Aversa <thek3nger@gmail.com>"]
+keywords = ["pathfinding", "benchmark", "parser"]
+homepage = "https://github.com/THeK3nger/movingai-rust"
+license = "MIT"
+
+[badges]
+
+maintenance = { status = "experimental" }
 
 [dependencies]
