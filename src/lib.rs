@@ -77,14 +77,26 @@ impl Index<Coords2D> for MovingAiMap  {
     
 }
 
+struct SceneRecord {
+    bucket: u32,
+    map_file: String,
+    map_width: usize,
+    map_height: usize,
+    start_x: usize,
+    start_y: usize,
+    goal_x: usize,
+    goal_y: usize,
+    optimal_length: f64
+}
 
 mod parser {
 
     use std::fs::File;
     use std::io::prelude::*;
     use MovingAiMap;
+    use SceneRecord;
 
-    pub fn parse_file(path: &str) -> Result<MovingAiMap, &'static str> {
+    pub fn parse_map_file(path: &str) -> Result<MovingAiMap, &'static str> {
         let mut file = match File::open(path) {
             Ok(f) => f,
             Err(err) => {
@@ -126,6 +138,10 @@ mod parser {
         ));
     }
 
+    fn parse_scen_file(path: &str) -> Vec<SceneRecord> {
+            return Vec::new();
+    }
+
 }
 
 #[cfg(test)]
@@ -133,7 +149,7 @@ mod tests {
 
     use Map2D;
     use MovingAiMap;
-    use parser::parse_file;
+    use parser::parse_map_file;
 
     #[test]
     fn indexing() {
@@ -148,7 +164,7 @@ mod tests {
 
     #[test]
     fn parsing() {
-        let map = parse_file("./test/arena.map").unwrap();
+        let map = parse_map_file("./test/arena.map").unwrap();
         assert_eq!(map.get_width(), 49 );
     }
 }
