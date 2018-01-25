@@ -1,5 +1,6 @@
 use std::ops::Index;
 
+/// Store coorinates in the (x,y) format.
 pub type Coords2D = (usize, usize);
 
 pub trait Map2D<T> {
@@ -208,8 +209,8 @@ pub mod parser {
                 map_file: String::from(record[1]),
                 map_width: record[2].parse::<usize>().unwrap(),
                 map_height: record[3].parse::<usize>().unwrap(),
-                start_pos: (record[5].parse::<usize>().unwrap(), record[4].parse::<usize>().unwrap()),
-                goal_pos: (record[7].parse::<usize>().unwrap(), record[6].parse::<usize>().unwrap()),
+                start_pos: (record[4].parse::<usize>().unwrap(), record[5].parse::<usize>().unwrap()),
+                goal_pos: (record[6].parse::<usize>().unwrap(), record[7].parse::<usize>().unwrap()),
                 optimal_length: record[8].parse::<f64>().unwrap()
             })
         }
@@ -248,6 +249,6 @@ mod tests {
     #[test]
     fn parsing_scene() {
         let scen = parse_scen_file("./test/arena2.map.scen").unwrap();
-        assert_eq!(scen[3].start_pos,(165, 102));
+        assert_eq!(scen[3].start_pos,(102, 165));
     }
 }
