@@ -1,8 +1,20 @@
+#![doc(html_logo_url = "https://www.movingai.com/images/mai3.png", html_favicon_url = "https://www.movingai.com/images/mai3.png")]
+#![deny(missing_docs)]
+
+//!
+//! The MovingAI Benchmark Parser
+//!
+//! # Overview
+//!
+//! Things.
+
 use std::ops::Index;
 
 /// Store coorinates in the (x,y) format.
 pub type Coords2D = (usize, usize);
 
+/// A trait representing common operations that can be performed on 2D Maps 
+/// representations.
 pub trait Map2D<T> {
     
     /// Every Map2D must have an height.
@@ -45,6 +57,18 @@ pub struct MovingAiMap {
 
 impl MovingAiMap {
 
+    /// Create a new `MovingAIMap` object from basic components.
+    ///
+    /// # Arguments
+    ///  * `map_type`: The type of map you are registering. Usually `octile`.
+    ///  * `height`: the height of the map.
+    ///  * `width`: the width of the map.
+    ///  * `map`: A vector representing the map in row-major order.
+    ///
+    /// # Panics
+    /// 
+    /// The `new` call will panic id the size of the map vector is different
+    /// from `heigth*width`.
     pub fn new(map_type: String, height: usize, width: usize, map: Vec<char>) -> MovingAiMap {
         if map.len() != height*width {
             panic!("Given vector is not compatible with passed `width` and `height`.");
