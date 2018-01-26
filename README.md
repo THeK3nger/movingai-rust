@@ -6,6 +6,18 @@
 
 Map/Scenario Parser for the [MovingAI benchmark](http://www.movingai.com/benchmarks) format. It offers a quick way to parse scenario and map files, plus some map utility to manage and query information from them.
 
+## Map Features
+
+The create not only parse a map and scene file, it also provide an object for easy interacting with it.
+
+Some of the functionalities are:
+
+ - Easy idiomatic access to the map date, such as width, height and tiles at specific coordinate.
+ - Check if a tile is traversable or not according the MovingAI format rules.
+ - [Not Yet Implemented] Get the list of neighbors coordinates of a specific tile.
+ - [Not Yet Implemented] Convert bitmaps into `.map` files.
+ - And more things I still need to decide. :D
+
 ## How to use
 
 ```rust
