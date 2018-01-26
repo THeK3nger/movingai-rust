@@ -66,10 +66,35 @@ pub trait Map2D<T> {
     fn is_out_of_bound(&self, coords: Coords2D) -> bool;
 
     /// Check if a tile in the map can be traversed.
+    ///
+    /// This check if a tile can be traversed by an agent **in some situation**.
+    /// For instance, a water tile `W` is traversable if coming from another
+    /// water tile, so this function will return `true`.
+    ///
+    /// The only things that can not be traversed are trees (`T`), out of bounds,
+    /// and other unpassable obstacles (`@` and `O``).
+    ///
     fn is_traversable(&self, tile: Coords2D) -> bool;
 
     /// Check if a tile in the map can be traversed coming from the `from` tile.
-    fn is_traversable_from(&self, tile: Coords2D, from: Coords2D) -> bool;
+    ///
+    /// # Arguments
+    ///  - `tile` The destination tile.
+    ///  - `tile` The tile from which the agent starts moving.
+    ///
+    /// # Details
+    /// This function encodes all the MovingAI rules about traversability.
+    /// In particular:
+    ///  - A water tile (`W`) can be traversed but only if the agent does not
+    ///    comes from regular terrain (`.` and `G`).
+    ///  - A swamp tile (`S`) can be traversed only if the agent comes from
+    ///    regular terrain.
+    ///
+    /// For example, I can move from `W` to `W` or form `W` to `.`, 
+    /// but not from `.` to `W`. Or I can move from `.` to `S` or 
+    /// from `S` to `.`, or from `S` to `S` but not from `S` to `W` 
+    /// (and vice versa).
+    fn is_traversable_from(&self, from: Coords2D, to: Coords2D) -> bool;
 
 }
 
@@ -147,11 +172,11 @@ impl Map2D<char> for MovingAiMap {
         }
     }
 
-    fn is_traversable_from(&self, tile: Coords2D, from: Coords2D) -> bool {
-        if self.is_out_of_bound(tile) { return false; }
+    fn is_traversable_from(&self, from: Coords2D, to: Coords2D) -> bool {
+        if self.is_out_of_bound(to) { return false; }
         if self.is_out_of_bound(from) { return false; }
-        if !self.coordinates_connect(tile, from) { return false; }
-        let tile_char = *(self.get_cell(tile));
+        if !self.coordinates_connect(to, from) { return false; }
+        let tile_char = *(self.get_cell(to));
         let from_char = *(self.get_cell(from));
         match (tile_char, from_char) {
             ('.', _) => true,
@@ -160,6 +185,7 @@ impl Map2D<char> for MovingAiMap {
             ('O', _) => false,
             ('T', _) => false,
             ('S', '.') => true,
+            ('S', 'S') => true,
             ('W', 'W') => true,
             _ => false,
         }
