@@ -227,7 +227,6 @@ pub mod parser {
                 continue;
             }
             let record: Vec<&str> = line.split("\t").collect();
-            println!("{:?}", record);
             table.push(SceneRecord {
                 bucket:  record[0].parse::<u32>().unwrap(),
                 map_file: String::from(record[1]),
