@@ -383,7 +383,7 @@ mod tests {
         let map = parse_map_file("./test/arena.map").unwrap();
         assert!(!map.is_traversable((0,0)));
         assert!(map.is_traversable((5,2)));
-        assert!(!map.is_traversable_from((3,0),(3,1)));
-        assert!(!map.is_traversable_from((3,7),(3,1)));      
+        assert!(!map.is_traversable_from((3,1),(3,0)));
+        assert!(!map.is_traversable_from((3,1),(3,7)));      
     }
 }
