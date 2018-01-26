@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+ - I add a new API for _traversability_ tests.
+   - `is_traversable_from` test if a tile is traversable coming from another tile. This does not perform search, so it works **only** for connecting tiles. We need this because some MovingAI tiles are accessible depending on where the agent comes from (e.g., swamps and water).
+   - `is_traversable` just check if a tile is traversable (in some situation) or a plain unpassable object (such as out of bounds or trees). 
+
 ## [0.2.0] - 2018-01-25
 
 ### Changed
