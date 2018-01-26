@@ -45,6 +45,32 @@ pub trait Map2D<T> {
     /// ```
     fn get_cell(&self, coords: Coords2D) -> &T;
 
+    /// Check if the given coordinates are out of bound.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use movingai::Map2D;
+    /// # use movingai::MovingAiMap;
+    /// #
+    /// # let mm = MovingAiMap::new(
+    /// #       String::from("test"),
+    /// #       54,
+    /// #       56,
+    /// #       vec!['.'; 54*56]
+    /// #   );
+    /// assert!(mm.is_out_of_bound((76,3)));
+    /// assert!(!mm.is_out_of_bound((23,23)));
+    /// ```
+    ///  
+    fn is_out_of_bound(&self, coords: Coords2D) -> bool;
+
+    /// Check if a tile in the map can be traversed.
+    fn is_traversable(&self, tile: Coords2D) -> bool;
+
+    /// Check if a tile in the map can be traversed coming from the `from` tile.
+    fn is_traversable_from(&self, tile: Coords2D, from: Coords2D) -> bool;
+
 }
 
 /// An immutable representation of a MovingAI map.
@@ -78,6 +104,18 @@ impl MovingAiMap {
         }
     }
 
+    fn coordinates_connect(&self, coordsA: Coords2D, coordsB: Coords2D) -> bool {
+        let x1 = coordsA.0 as i32;
+        let x2 = coordsB.0 as i32;
+        let y1 = coordsA.1 as i32;
+        let y2 = coordsB.1 as i32;
+        if self.map_type == "octile" {
+            (x1-x2).abs() <= 1 && (y1-y2).abs() <= 1
+        } else {
+            (y2 == y1 && (x2 == x1 + 1 || x2 == x1 - 1)) || (x2 == x1 && (y2 == y1 + 1 || y2 == y1 - 1))
+        }
+    }
+
 }
 
 impl Map2D<char> for MovingAiMap {
@@ -88,6 +126,43 @@ impl Map2D<char> for MovingAiMap {
     
     fn get_cell(&self, coords: Coords2D) -> &char {
         &self.map[coords.1*self.get_width() + coords.0]
+    }
+
+    fn is_out_of_bound(&self, coords: Coords2D) -> bool {
+        coords.0 >= self.width || coords.1 >= self.height
+    }
+
+    fn is_traversable(&self, tile: Coords2D) -> bool {
+        if self.is_out_of_bound(tile) { return false; }
+        let tile_char = self.get_cell(tile);
+        match *tile_char {
+            '.' => true,
+            'G' => true,
+            '@' => false,
+            'O' => false,
+            'T' => false,
+            'S' => true,
+            'W' => true,
+            _   => false, // Not recognized char.
+        }
+    }
+
+    fn is_traversable_from(&self, tile: Coords2D, from: Coords2D) -> bool {
+        if self.is_out_of_bound(tile) { return false; }
+        if self.is_out_of_bound(from) { return false; }
+        if !self.coordinates_connect(tile, from) { return false; }
+        let tile_char = *(self.get_cell(tile));
+        let from_char = *(self.get_cell(from));
+        match (tile_char, from_char) {
+            ('.', _) => true,
+            ('G', _) => true,
+            ('@', _) => false,
+            ('O', _) => false,
+            ('T', _) => false,
+            ('S', '.') => true,
+            ('W', 'W') => true,
+            _ => false,
+        }
     }
 
 }
@@ -223,7 +298,7 @@ pub mod parser {
             if line.starts_with("version") {
                 continue;
             }
-            if (line.is_empty()) {
+            if line.is_empty() {
                 continue;
             }
             let record: Vec<&str> = line.split("\t").collect();
@@ -261,17 +336,28 @@ mod tests {
             map: vec!['.'; 4*6]
         };
         assert_eq!(test[(0,3)], '.');
+        assert_eq!(test[(3,0)], '.');
     }
 
     #[test]
     fn parsing_map() {
         let map = parse_map_file("./test/arena.map").unwrap();
         assert_eq!(map.get_width(), 49 );
+        assert_eq!(*map.get_cell((3,0)), 'T');
     }
 
     #[test]
     fn parsing_scene() {
         let scen = parse_scen_file("./test/arena2.map.scen").unwrap();
         assert_eq!(scen[3].start_pos,(102, 165));
+    }
+
+    #[test]
+    fn traversability() {
+        let map = parse_map_file("./test/arena.map").unwrap();
+        assert!(!map.is_traversable((0,0)));
+        assert!(map.is_traversable((5,2)));
+        assert!(!map.is_traversable_from((3,0),(3,1)));
+        assert!(!map.is_traversable_from((3,7),(3,1)));      
     }
 }
