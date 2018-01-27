@@ -79,11 +79,13 @@ pub trait Map2D<T> {
     /// Check if a tile in the map can be traversed coming from the `from` tile.
     ///
     /// # Arguments
-    ///  - `tile` The destination tile.
-    ///  - `tile` The tile from which the agent starts moving.
+    ///  - `from` The tile from which the agent starts moving.
+    ///  - `to` The destination tile.
     ///
     /// # Details
-    /// This function encodes all the MovingAI rules about traversability.
+    /// For instance, in `MovingAIMap` the implementation encodes all the MovingAI
+    /// rules about traversability.
+    ///
     /// In particular:
     ///  - A water tile (`W`) can be traversed but only if the agent does not
     ///    comes from regular terrain (`.` and `G`).
