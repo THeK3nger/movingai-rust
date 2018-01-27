@@ -98,6 +98,16 @@ pub trait Map2D<T> {
     /// (and vice versa).
     fn is_traversable_from(&self, from: Coords2D, to: Coords2D) -> bool;
 
+    /// Return an iterator returning all the coordinates in the map
+    /// in row-major order.
+    fn coords_iter(&self) -> Map2DCoordsIter;
+
+    /// Return the number of free states of a map.
+    ///
+    /// For "free state" we means _any_ tile that can _potentially_
+    /// be traversed.
+    fn free_states(&self) -> u32;
+
 }
 
 /// An immutable representation of a MovingAI map.
@@ -143,6 +153,37 @@ impl MovingAiMap {
         }
     }
 
+}
+
+/// This represents a coordinate iterator for a Map2D.
+pub struct Map2DCoordsIter {
+    width: usize,
+    height: usize,
+    curr_x: usize,
+    curr_y: usize,
+}
+
+impl Iterator for Map2DCoordsIter {
+
+    type Item = Coords2D;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // We save the current value.
+        let x = self.curr_x;
+        let y = self.curr_y;
+        // If y is out of bound, we stop.
+        if self.curr_y >= self.height {
+            return None;
+        }
+        // We compute the next pair of values.
+        self.curr_x += 1;
+        if self.curr_x >= self.width {
+            self.curr_x = 0;
+            self.curr_y += 1;
+        }
+        // But we return the current one!
+        Some((x, y))
+    }
 }
 
 impl Map2D<char> for MovingAiMap {
@@ -191,6 +232,20 @@ impl Map2D<char> for MovingAiMap {
             ('W', 'W') => true,
             _ => false,
         }
+    }
+
+    fn coords_iter(&self) -> Map2DCoordsIter {
+        Map2DCoordsIter { width: self.width, height: self.height, curr_x: 0, curr_y: 0 }
+    }
+
+    fn free_states(&self) -> u32 {
+        let mut counter = 0;
+        for c in self.coords_iter() {
+            if self.is_traversable(c) {
+                counter+=1;
+            }
+        }
+        return counter;
     }
 
 }
@@ -387,5 +442,28 @@ mod tests {
         assert!(map.is_traversable((5,2)));
         assert!(!map.is_traversable_from((3,1),(3,0)));
         assert!(!map.is_traversable_from((3,1),(3,7)));      
+    }
+
+    #[test]
+    fn iterator() {
+        let map = parse_map_file("./test/arena.map").unwrap();
+        let arena_w = 49;
+        let arena_h = 49;
+        let mut x = 0;
+        let mut y = 0;
+        for c in map.coords_iter() {
+            assert_eq!(c, (x, y));
+            x += 1;
+            if x >= arena_w {
+                x = 0;
+                y += 1;
+            }
+        }
+    }
+
+    #[test]
+    fn states() {
+        let map = parse_map_file("./test/arena.map").unwrap();
+        assert_eq!(map.free_states(), 2054 );
     }
 }
