@@ -265,77 +265,24 @@ impl Index<Coords2D> for MovingAiMap  {
 
 /// Represent a row (scene) in a scene file.
 pub struct SceneRecord {
-    bucket: u32,
-    map_file: String,
-    map_width: usize,
-    map_height: usize,
-    start_pos: Coords2D,
-    goal_pos: Coords2D,
-    optimal_length: f64
-}
+    /// Used to cluster pqth queries in the benchmark.
+    pub bucket: u32,
 
-#[cfg(test)]
-mod tests {
+    /// Neme of the map file associated to the scene.
+    pub map_file: String,
 
-    use Map2D;
-    use MovingAiMap;
-    use parser::parse_map_file;
-    use parser::parse_scen_file;
+    /// Width of the map.
+    pub map_width: usize,
 
-    #[test]
-    fn indexing() {
-        let test = MovingAiMap {
-            map_type: String::from("test"),
-            height: 4,
-            width: 6,
-            map: vec!['.'; 4*6]
-        };
-        assert_eq!(test[(0,3)], '.');
-        assert_eq!(test[(3,0)], '.');
-    }
+    /// Height of the map.
+    pub map_height: usize,
 
-    #[test]
-    fn parsing_map() {
-        let map = parse_map_file("./test/arena.map").unwrap();
-        assert_eq!(map.get_width(), 49 );
-        assert_eq!(*map.get_cell((3,0)), 'T');
-    }
+    /// Starting position.
+    pub start_pos: Coords2D,
 
-    #[test]
-    fn parsing_scene() {
-        let scen = parse_scen_file("./test/arena2.map.scen").unwrap();
-        assert_eq!(scen[3].start_pos,(102, 165));
-    }
+    /// Goal position.
+    pub goal_pos: Coords2D,
 
-    #[test]
-    fn traversability() {
-        let map = parse_map_file("./test/arena.map").unwrap();
-        assert!(!map.is_traversable((0,0)));
-        assert!(map.is_traversable((5,2)));
-        assert!(!map.is_traversable_from((3,1),(3,0)));
-        assert!(!map.is_traversable_from((3,1),(3,7)));      
-    }
-
-    #[test]
-    fn iterator() {
-        let map = parse_map_file("./test/arena.map").unwrap();
-        let arena_w = 49;
-        let arena_h = 49;
-        let mut x = 0;
-        let mut y = 0;
-        for c in map.coords_iter() {
-            assert_eq!(c, (x, y));
-            x += 1;
-            if x >= arena_w {
-                x = 0;
-                y += 1;
-            }
-        }
-    }
-
-    #[test]
-    fn states() {
-        let map = parse_map_file("./test/arena.map").unwrap();
-        assert_eq!(map.free_states(), 2054 );
-    }
+    /// Optimal lenght of the path.
+    pub optimal_length: f64
 }

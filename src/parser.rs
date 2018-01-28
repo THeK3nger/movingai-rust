@@ -25,7 +25,7 @@ use SceneRecord;
 /// ```
 /// use movingai::parser::parse_map_file;
 ///
-/// let map = parse_map_file("./test/arena.map").unwrap();
+/// let map = parse_map_file("./tests/arena.map").unwrap();
 /// ```
 pub fn parse_map_file(path: &str) -> Result<MovingAiMap, &'static str> {
     let mut file = match File::open(path) {
@@ -89,7 +89,7 @@ pub fn parse_map_file(path: &str) -> Result<MovingAiMap, &'static str> {
 /// ```
 /// use movingai::parser::parse_scen_file;
 ///
-/// let scen = parse_scen_file("./test/arena2.map.scen").unwrap();
+/// let scen = parse_scen_file("./tests/arena2.map.scen").unwrap();
 /// ```
 pub fn parse_scen_file(path: &str) -> Result<Vec<SceneRecord>, &'static str> {
     let mut file = match File::open(path) {
