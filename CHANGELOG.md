@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+ - New iterator for map coordinates in row-major order.
+ - New function for counting all free states in the map.
+
+### Fixed
+ - Scene struct fields are now public.
+
 ## [0.3.0] - 2018-01-26
 
 ### Added
