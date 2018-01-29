@@ -225,18 +225,42 @@ impl Map2D<char> for MovingAiMap {
         if self.is_out_of_bound(to) { return false; }
         if self.is_out_of_bound(from) { return false; }
         if !self.coordinates_connect(to, from) { return false; }
+        let diagonal = from.0 != to.0 && from.1 != to.1;
+        let octile = self.map_type == "octile";
         let tile_char = *(self.get_cell(to));
         let from_char = *(self.get_cell(from));
-        match (tile_char, from_char) {
-            ('.', _) => true,
-            ('G', _) => true,
-            ('@', _) => false,
-            ('O', _) => false,
-            ('T', _) => false,
-            ('S', '.') => true,
-            ('S', 'S') => true,
-            ('W', 'W') => true,
-            _ => false,
+        if !octile || !diagonal {
+            match (tile_char, from_char) {
+                ('.', _) => true,
+                ('G', _) => true,
+                ('@', _) => false,
+                ('O', _) => false,
+                ('T', _) => false,
+                ('S', '.') => true,
+                ('S', 'S') => true,
+                ('W', 'W') => true,
+                _ => false,
+            }
+        } else {
+            // When connecting diagonals we need to check that the step is
+            // not cutting corner.
+            //
+            // xb.
+            // a..
+            // ...
+            //
+            // In the above example a cannot traverse from a to b because it 
+            // would cut the corner `x`.
+            let x = from.0;
+            let y = from.1;
+            let p = to.0;
+            let q = to.1;
+            let intermediate_a = (x, q);
+            let intermediate_b = (p, y);
+            // A corner is not cut only if it is possible to reach the diagonal
+            // With a ANY double-step in a non-diagonal path.
+            self.is_traversable_from(from, intermediate_a) && self.is_traversable_from(intermediate_a, to) && 
+            self.is_traversable_from(from, intermediate_b) && self.is_traversable_from(intermediate_b, to)
         }
     }
 

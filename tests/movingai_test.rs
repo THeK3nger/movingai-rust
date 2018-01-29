@@ -67,6 +67,7 @@ fn states() {
 fn neighbours() {
     let map = parse_map_file("./tests/arena.map").unwrap();
     let neigh = map.neighbors((19,1));
+    assert_eq!(neigh.len(), 1);
     assert!(neigh.contains(&(19,2)));
     assert!(!neigh.contains(&(19,0)));
 }
