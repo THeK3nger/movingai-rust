@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### 0.4.0
+
 ### Added
  - New iterator for map coordinates in row-major order.
  - New function `map.free_states()` for counting all free states in the map.
@@ -13,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
  - Scene struct fields are now public.
+ - `is_traversable_from` now handle corner-cutting and does not consider corner-cut connection as "traversable".
 
 ## [0.3.0] - 2018-01-26
 
