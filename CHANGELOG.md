@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
  - New iterator for map coordinates in row-major order.
- - New function for counting all free states in the map.
+ - New function `map.free_states()` for counting all free states in the map.
+ - New function `map.neighbors(tile)` returning the accessible neighbors of a tile.
 
 ### Fixed
  - Scene struct fields are now public.
