@@ -45,7 +45,6 @@ fn traversability() {
 fn iterator() {
     let map = parse_map_file("./tests/arena.map").unwrap();
     let arena_w = 49;
-    let arena_h = 49;
     let mut x = 0;
     let mut y = 0;
     for c in map.coords_iter() {
@@ -62,4 +61,12 @@ fn iterator() {
 fn states() {
     let map = parse_map_file("./tests/arena.map").unwrap();
     assert_eq!(map.free_states(), 2054 );
+}
+
+#[test]
+fn neighbours() {
+    let map = parse_map_file("./tests/arena.map").unwrap();
+    let neigh = map.neighbors((19,1));
+    assert!(neigh.contains(&(19,2)));
+    assert!(!neigh.contains(&(19,0)));
 }

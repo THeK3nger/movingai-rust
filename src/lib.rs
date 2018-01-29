@@ -111,6 +111,9 @@ pub trait Map2D<T> {
     /// be traversed.
     fn free_states(&self) -> u32;
 
+    /// Return the list of accessible neighbors of a tile.
+    fn neighbors(&self, tile: Coords2D) -> Vec<Coords2D>;
+
 }
 
 /// An immutable representation of a MovingAI map.
@@ -249,6 +252,14 @@ impl Map2D<char> for MovingAiMap {
             }
         }
         return counter;
+    }
+
+    fn neighbors(&self, tile: Coords2D) -> Vec<Coords2D> {
+        let x = tile.0;
+        let y = tile.1;
+        let all = vec![(x+1,y), (x+1, y+1), (x+1, y-1), 
+            (x,y+1), (x, y-1), (x-1, y), (x-1, y-1), (x-1, y+1)];
+        return all.into_iter().filter(|x| self.is_traversable_from(tile, *x)).collect();
     }
 
 }
