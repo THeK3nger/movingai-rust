@@ -35,7 +35,12 @@ pub fn parse_map_file(path: &str) -> Result<MovingAiMap, &'static str> {
         }
     };
     let mut contents = String::new();
-    file.read_to_string(&mut contents);
+    match file.read_to_string(&mut contents) {
+        Ok(x) => x,
+        Err(err) => {
+            panic!("Errore reading file {}", err);
+        }
+    };
 
     let mut height: usize = 0;
     let mut width: usize = 0;
@@ -99,7 +104,12 @@ pub fn parse_scen_file(path: &str) -> Result<Vec<SceneRecord>, &'static str> {
         }
     };
     let mut contents = String::new();
-    file.read_to_string(&mut contents);
+    match file.read_to_string(&mut contents) {
+        Ok(x) => x,
+        Err(err) => {
+            panic!("Errore reading file {}", err);
+        }
+    };
 
     let mut table: Vec<SceneRecord> = Vec::new();
 

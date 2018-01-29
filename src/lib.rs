@@ -147,11 +147,11 @@ impl MovingAiMap {
         }
     }
 
-    fn coordinates_connect(&self, coordsA: Coords2D, coordsB: Coords2D) -> bool {
-        let x1 = coordsA.0 as i32;
-        let x2 = coordsB.0 as i32;
-        let y1 = coordsA.1 as i32;
-        let y2 = coordsB.1 as i32;
+    fn coordinates_connect(&self, coords_a: Coords2D, coords_b: Coords2D) -> bool {
+        let x1 = coords_a.0 as i32;
+        let x2 = coords_b.0 as i32;
+        let y1 = coords_a.1 as i32;
+        let y2 = coords_b.1 as i32;
         if self.map_type == "octile" {
             (x1-x2).abs() <= 1 && (y1-y2).abs() <= 1
         } else {
