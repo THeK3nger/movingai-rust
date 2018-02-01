@@ -8,6 +8,8 @@ use movingai::Coords2D;
 use movingai::parser::parse_map_file;
 use movingai::parser::parse_scen_file;
 
+// Let's define the search nodes.
+
 #[derive(Debug)]
 struct SearchNode {
     pub f: f64,
@@ -40,6 +42,21 @@ impl Ord for SearchNode {
         else { Ordering::Equal }
     }
 }
+
+// Let's define a path.
+
+type Path = Vec<Coords2D>;
+
+fn path_lenght(p: Path) -> f64 {
+    let mut length: f64 = 0.0;
+    if p.len() < 2 { return 0.0f64; }
+    for i in 1..p.len() {
+        length += (((p[i-1].0-p[i].0).pow(2) + (p[i-1].1-p[i].1).pow(2)) as f64).sqrt();
+    }
+    return length;
+}
+
+
 
 fn astar(start: Coords2D, goal: Coords2D) {
 
