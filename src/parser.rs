@@ -1,6 +1,7 @@
 /// Contains all the parser functions.
 
 use std::fs::File;
+use std::io;
 use std::io::prelude::*;
 use MovingAiMap;
 use SceneRecord;
@@ -27,20 +28,10 @@ use SceneRecord;
 ///
 /// let map = parse_map_file("./tests/arena.map").unwrap();
 /// ```
-pub fn parse_map_file(path: &str) -> Result<MovingAiMap, &'static str> {
-    let mut file = match File::open(path) {
-        Ok(f) => f,
-        Err(err) => {
-            panic!("Errore opening file {}", err);
-        }
-    };
+pub fn parse_map_file(path: &str) -> io::Result<MovingAiMap> {
+    let mut file = File::open(path)?;
     let mut contents = String::new();
-    match file.read_to_string(&mut contents) {
-        Ok(x) => x,
-        Err(err) => {
-            panic!("Errore reading file {}", err);
-        }
-    };
+    file.read_to_string(&mut contents)?;
 
     let mut height: usize = 0;
     let mut width: usize = 0;
@@ -84,7 +75,6 @@ pub fn parse_map_file(path: &str) -> Result<MovingAiMap, &'static str> {
 ///
 /// # Panics
 ///  For the time, it panics if the map format it is not correct.
-///  TODO: Catch all these errors and encode them into `Result`.
 ///
 /// # Errors
 ///  Return errors if it is not possible to open the specified file.
@@ -96,20 +86,10 @@ pub fn parse_map_file(path: &str) -> Result<MovingAiMap, &'static str> {
 ///
 /// let scen = parse_scen_file("./tests/arena2.map.scen").unwrap();
 /// ```
-pub fn parse_scen_file(path: &str) -> Result<Vec<SceneRecord>, &'static str> {
-    let mut file = match File::open(path) {
-        Ok(f) => f,
-        Err(err) => {
-            panic!("Errore opening file {}", err);
-        }
-    };
+pub fn parse_scen_file(path: &str) -> io::Result<Vec<SceneRecord>> {
+    let mut file = File::open(path)?;
     let mut contents = String::new();
-    match file.read_to_string(&mut contents) {
-        Ok(x) => x,
-        Err(err) => {
-            panic!("Errore reading file {}", err);
-        }
-    };
+    file.read_to_string(&mut contents)?;
 
     let mut table: Vec<SceneRecord> = Vec::new();
 
@@ -122,13 +102,15 @@ pub fn parse_scen_file(path: &str) -> Result<Vec<SceneRecord>, &'static str> {
         }
         let record: Vec<&str> = line.split("\t").collect();
         table.push(SceneRecord {
-            bucket:  record[0].parse::<u32>().unwrap(),
+            bucket:  record[0].parse::<u32>().expect("Error parsing bucket size."),
             map_file: String::from(record[1]),
-            map_width: record[2].parse::<usize>().unwrap(),
-            map_height: record[3].parse::<usize>().unwrap(),
-            start_pos: (record[4].parse::<usize>().unwrap(), record[5].parse::<usize>().unwrap()),
-            goal_pos: (record[6].parse::<usize>().unwrap(), record[7].parse::<usize>().unwrap()),
-            optimal_length: record[8].parse::<f64>().unwrap()
+            map_width: record[2].parse::<usize>().expect("Error parsing map width."),
+            map_height: record[3].parse::<usize>().expect("Error parsing map height."),
+            start_pos: (record[4].parse::<usize>().expect("Error parsing start x."), 
+                        record[5].parse::<usize>().expect("Error parsing start y.")),
+            goal_pos: (record[6].parse::<usize>().expect("Error parsing goal x"),
+                        record[7].parse::<usize>().expect("Error parsing goal y")),
+            optimal_length: record[8].parse::<f64>().expect("Erro parsing optimal length."),
         })
     }
 
