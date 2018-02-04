@@ -109,7 +109,7 @@ pub trait Map2D<T> {
     ///
     /// For "free state" we means _any_ tile that can _potentially_
     /// be traversed.
-    fn free_states(&self) -> u32;
+    fn free_states(&self) -> usize;
 
     /// Return the list of accessible neighbors of a tile.
     fn neighbors(&self, tile: Coords2D) -> Vec<Coords2D>;
@@ -139,19 +139,15 @@ impl MovingAiMap {
     /// The `new` call will panic id the size of the map vector is different
     /// from `heigth*width`.
     pub fn new(map_type: String, height: usize, width: usize, map: Vec<char>) -> MovingAiMap {
-        if map.len() != height*width {
-            panic!("Given vector is not compatible with passed `width` and `height`.");
-        }
+        assert_eq!(map.len(), height*width);
         MovingAiMap {
             map_type, height, width, map
         }
     }
 
     fn coordinates_connect(&self, coords_a: Coords2D, coords_b: Coords2D) -> bool {
-        let x1 = coords_a.0 as i32;
-        let x2 = coords_b.0 as i32;
-        let y1 = coords_a.1 as i32;
-        let y2 = coords_b.1 as i32;
+        let (x1, y1) = (coords_a.0 as isize, coords_a.1 as isize);
+        let (x2, y2) = (coords_b.0 as isize, coords_b.1 as isize);
         if self.map_type == "octile" {
             (x1-x2).abs() <= 1 && (y1-y2).abs() <= 1
         } else {
@@ -251,10 +247,8 @@ impl Map2D<char> for MovingAiMap {
             //
             // In the above example a cannot traverse from a to b because it 
             // would cut the corner `x`.
-            let x = from.0;
-            let y = from.1;
-            let p = to.0;
-            let q = to.1;
+            let (x, y) = from;
+            let (p, q) = to;
             let intermediate_a = (x, q);
             let intermediate_b = (p, y);
             // A corner is not cut only if it is possible to reach the diagonal
@@ -268,19 +262,12 @@ impl Map2D<char> for MovingAiMap {
         Map2DCoordsIter { width: self.width, height: self.height, curr_x: 0, curr_y: 0 }
     }
 
-    fn free_states(&self) -> u32 {
-        let mut counter = 0;
-        for c in self.coords_iter() {
-            if self.is_traversable(c) {
-                counter+=1;
-            }
-        }
-        return counter;
+    fn free_states(&self) -> usize {
+        self.coords_iter().filter(|c| self.is_traversable(*c)).count()
     }
 
     fn neighbors(&self, tile: Coords2D) -> Vec<Coords2D> {
-        let x = tile.0;
-        let y = tile.1;
+        let (x, y) = tile;
         let all = vec![(x+1,y), (x+1, y+1), (x+1, y-1), 
             (x,y+1), (x, y-1), (x-1, y), (x-1, y-1), (x-1, y+1)];
         return all.into_iter().filter(|x| self.is_traversable_from(tile, *x)).collect();

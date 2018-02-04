@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
  - Parser function now returns `Result<T, io::Error>` instead of a static string reference.
+ - `map.free_states()` returns `usize`.
 
 ### 0.4.0
 
