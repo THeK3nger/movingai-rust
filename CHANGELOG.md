@@ -6,11 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.5.0] - 2018-02-05
+
 ### Changed
  - Parser function now returns `Result<T, io::Error>` instead of a static string reference.
  - `map.free_states()` returns `usize`.
 
-### 0.4.0
+## [0.4.0] - 2018-01-28
 
 ### Added
  - New iterator for map coordinates in row-major order.
