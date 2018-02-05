@@ -55,8 +55,8 @@ pub fn parse_map_file(path: &str) -> io::Result<MovingAiMap> {
                 let key = param[0];
                 let value = param[1];
                 if key == "type" { map_type = String::from(value); }
-                else if key == "height" { height = value.parse::<usize>().unwrap(); }
-                else if key == "width" { width = value.parse::<usize>().unwrap(); }
+                else if key == "height" { height = value.parse::<usize>().expect("Error parsing map height."); }
+                else if key == "width" { width = value.parse::<usize>().expect("Error parsing map width."); }
             }
         }
     }
