@@ -1,6 +1,7 @@
 /// Contains all the parser functions.
 
 use std::fs::File;
+use std::path;
 use std::io;
 use std::io::prelude::*;
 use MovingAiMap;
@@ -24,11 +25,12 @@ use SceneRecord;
 /// # Examples
 ///
 /// ```
+/// use std::path::Path;
 /// use movingai::parser::parse_map_file;
 ///
-/// let map = parse_map_file("./tests/arena.map").unwrap();
+/// let map = parse_map_file(Path::new("./tests/arena.map")).unwrap();
 /// ```
-pub fn parse_map_file(path: &str) -> io::Result<MovingAiMap> {
+pub fn parse_map_file(path: &path::Path) -> io::Result<MovingAiMap> {
     let mut file = File::open(path)?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
@@ -82,11 +84,12 @@ pub fn parse_map_file(path: &str) -> io::Result<MovingAiMap> {
 /// # Examples
 ///
 /// ```
+/// use std::path::Path;
 /// use movingai::parser::parse_scen_file;
 ///
-/// let scen = parse_scen_file("./tests/arena2.map.scen").unwrap();
+/// let scen = parse_scen_file(Path::new("./tests/arena2.map.scen")).unwrap();
 /// ```
-pub fn parse_scen_file(path: &str) -> io::Result<Vec<SceneRecord>> {
+pub fn parse_scen_file(path: &path::Path) -> io::Result<Vec<SceneRecord>> {
     let mut file = File::open(path)?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
