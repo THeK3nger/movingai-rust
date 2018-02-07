@@ -6,7 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+  - Breaking. Now parsers need a `path::Path` structure instead of a `&str` for file paths.
+
 ## [0.5.1] - 2018-02-07
+
+### Changed
  - Mostly refactored the examples and documentation.
 
 ## [0.5.0] - 2018-02-05

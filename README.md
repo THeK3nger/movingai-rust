@@ -69,7 +69,7 @@ fn shortest_path(map: &MovingAiMap, start: Coords2D, goal: Coords2D) -> Option<f
 }
 ``` 
 
-and to write benchamrk over a scen file!
+and to write benchmark over a scen file!
 
 ```rust
 fn main() {
