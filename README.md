@@ -23,10 +23,11 @@ Some of the functionalities are:
 ```rust
 extern crate movingai;
 
+use std::path::Path;
 use movingai::parser::parse_map_file;
 
 fn main() {
-    let map = parse_map_file("./test/arena.map").unwrap();
+    let map = parse_map_file(Path::new("./test/arena.map")).unwrap();
     let width = map.get_width();
     let tile = map[(4,5)]; // Access map location at row 4 and column 5.
 }
@@ -72,8 +73,8 @@ and to write benchamrk over a scen file!
 
 ```rust
 fn main() {
-    let map = parse_map_file("./tests/arena.map").unwrap();
-    let scenes = parse_scen_file("./tests/arena.map.scen").unwrap();
+    let map = parse_map_file(Path::new("./tests/arena.map")).unwrap();
+    let scenes = parse_scen_file(Path::new("./tests/arena.map.scen")).unwrap();
     for scene in scenes {
         let start = scene.start_pos;
         let goal = scene.goal_pos;
