@@ -1,5 +1,6 @@
 extern crate movingai;
 
+use std::time::{Duration, Instant};
 use std::collections::BinaryHeap;
 use std::cmp::Ordering;
 
@@ -93,9 +94,19 @@ fn shortest_path(map: &MovingAiMap, start: Coords2D, goal: Coords2D) -> Option<f
  
 fn main() {
     let map = parse_map_file("./tests/arena.map").unwrap();
-    let _scenes = parse_scen_file("./tests/arena.map.scen").unwrap();
-    match shortest_path(&map, (1,3), (4,3)) {
-        Some(x) => println!("{:?}", x),
-        None => println!("None"),
+    let scenes = parse_scen_file("./tests/arena.map.scen").unwrap();
+    for scene in scenes {
+        let start = scene.start_pos;
+        let goal = scene.goal_pos;
+        let t = Instant::now();
+        match shortest_path(&map, (1,3), (4,3)) {
+            Some(x) => {
+                let duration = t.elapsed();
+                let seconds = duration.as_secs();
+                let ms = (duration.subsec_nanos() as f64) / 1_000_000.0;
+                println!("{:?} -> {:?} \tin {:?} seconds and {:?} ms", start, goal, seconds, ms);
+            }
+            None => println!("None"),
+        }
     }
 }
