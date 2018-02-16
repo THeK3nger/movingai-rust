@@ -1,4 +1,5 @@
-#![doc(html_logo_url = "https://www.movingai.com/images/mai3.png", html_favicon_url = "https://www.movingai.com/images/mai3.png")]
+#![doc(html_logo_url = "https://www.movingai.com/images/mai3.png",
+       html_favicon_url = "https://www.movingai.com/images/mai3.png")]
 #![deny(missing_docs)]
 
 //!
@@ -16,10 +17,9 @@ use std::ops::Index;
 /// Store coorinates in the (x,y) format.
 pub type Coords2D = (usize, usize);
 
-/// A trait representing common operations that can be performed on 2D Maps 
+/// A trait representing common operations that can be performed on 2D Maps
 /// representations.
 pub trait Map2D<T> {
-    
     /// Every Map2D must have an height.
     fn get_height(&self) -> usize;
 
@@ -65,7 +65,7 @@ pub trait Map2D<T> {
     /// assert!(mm.is_out_of_bound((76,3)));
     /// assert!(!mm.is_out_of_bound((23,23)));
     /// ```
-    ///  
+    ///
     fn is_out_of_bound(&self, coords: Coords2D) -> bool;
 
     /// Check if a tile in the map can be traversed.
@@ -95,9 +95,9 @@ pub trait Map2D<T> {
     ///  - A swamp tile (`S`) can be traversed only if the agent comes from
     ///    regular terrain.
     ///
-    /// For example, I can move from `W` to `W` or form `W` to `.`, 
-    /// but not from `.` to `W`. Or I can move from `.` to `S` or 
-    /// from `S` to `.`, or from `S` to `S` but not from `S` to `W` 
+    /// For example, I can move from `W` to `W` or form `W` to `.`,
+    /// but not from `.` to `W`. Or I can move from `.` to `S` or
+    /// from `S` to `.`, or from `S` to `S` but not from `S` to `W`
     /// (and vice versa).
     fn is_traversable_from(&self, from: Coords2D, to: Coords2D) -> bool;
 
@@ -113,7 +113,6 @@ pub trait Map2D<T> {
 
     /// Return the list of accessible neighbors of a tile.
     fn neighbors(&self, tile: Coords2D) -> Vec<Coords2D>;
-
 }
 
 /// An immutable representation of a MovingAI map.
@@ -121,11 +120,10 @@ pub struct MovingAiMap {
     map_type: String,
     height: usize,
     width: usize,
-    map: Vec<char>
+    map: Vec<char>,
 }
 
 impl MovingAiMap {
-
     /// Create a new `MovingAIMap` object from basic components.
     ///
     /// # Arguments
@@ -135,13 +133,16 @@ impl MovingAiMap {
     ///  * `map`: A vector representing the map in row-major order.
     ///
     /// # Panics
-    /// 
+    ///
     /// The `new` call will panic id the size of the map vector is different
     /// from `heigth*width`.
     pub fn new(map_type: String, height: usize, width: usize, map: Vec<char>) -> MovingAiMap {
-        assert_eq!(map.len(), height*width);
+        assert_eq!(map.len(), height * width);
         MovingAiMap {
-            map_type, height, width, map
+            map_type,
+            height,
+            width,
+            map,
         }
     }
 
@@ -149,12 +150,12 @@ impl MovingAiMap {
         let (x1, y1) = (coords_a.0 as isize, coords_a.1 as isize);
         let (x2, y2) = (coords_b.0 as isize, coords_b.1 as isize);
         if self.map_type == "octile" {
-            (x1-x2).abs() <= 1 && (y1-y2).abs() <= 1
+            (x1 - x2).abs() <= 1 && (y1 - y2).abs() <= 1
         } else {
-            (y2 == y1 && (x2 == x1 + 1 || x2 == x1 - 1)) || (x2 == x1 && (y2 == y1 + 1 || y2 == y1 - 1))
+            (y2 == y1 && (x2 == x1 + 1 || x2 == x1 - 1))
+                || (x2 == x1 && (y2 == y1 + 1 || y2 == y1 - 1))
         }
     }
-
 }
 
 /// This represents a coordinate iterator for a Map2D.
@@ -166,7 +167,6 @@ pub struct Map2DCoordsIter {
 }
 
 impl Iterator for Map2DCoordsIter {
-
     type Item = Coords2D;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -189,13 +189,16 @@ impl Iterator for Map2DCoordsIter {
 }
 
 impl Map2D<char> for MovingAiMap {
+    fn get_width(&self) -> usize {
+        self.width
+    }
 
-    fn get_width(&self) -> usize { self.width }
+    fn get_height(&self) -> usize {
+        self.height
+    }
 
-    fn get_height(&self) -> usize { self.height }
-    
     fn get_cell(&self, coords: Coords2D) -> &char {
-        &self.map[coords.1*self.get_width() + coords.0]
+        &self.map[coords.1 * self.get_width() + coords.0]
     }
 
     fn is_out_of_bound(&self, coords: Coords2D) -> bool {
@@ -203,7 +206,9 @@ impl Map2D<char> for MovingAiMap {
     }
 
     fn is_traversable(&self, tile: Coords2D) -> bool {
-        if self.is_out_of_bound(tile) { return false; }
+        if self.is_out_of_bound(tile) {
+            return false;
+        }
         let tile_char = self.get_cell(tile);
         match *tile_char {
             '.' => true,
@@ -213,14 +218,20 @@ impl Map2D<char> for MovingAiMap {
             'T' => false,
             'S' => true,
             'W' => true,
-            _   => false, // Not recognized char.
+            _ => false, // Not recognized char.
         }
     }
 
     fn is_traversable_from(&self, from: Coords2D, to: Coords2D) -> bool {
-        if self.is_out_of_bound(to) { return false; }
-        if self.is_out_of_bound(from) { return false; }
-        if !self.coordinates_connect(to, from) { return false; }
+        if self.is_out_of_bound(to) {
+            return false;
+        }
+        if self.is_out_of_bound(from) {
+            return false;
+        }
+        if !self.coordinates_connect(to, from) {
+            return false;
+        }
         let diagonal = from.0 != to.0 && from.1 != to.1;
         let octile = self.map_type == "octile";
         let tile_char = *(self.get_cell(to));
@@ -245,7 +256,7 @@ impl Map2D<char> for MovingAiMap {
             // a..
             // ...
             //
-            // In the above example a cannot traverse from a to b because it 
+            // In the above example a cannot traverse from a to b because it
             // would cut the corner `x`.
             let (x, y) = from;
             let (p, q) = to;
@@ -253,36 +264,52 @@ impl Map2D<char> for MovingAiMap {
             let intermediate_b = (p, y);
             // A corner is not cut only if it is possible to reach the diagonal
             // With a ANY double-step in a non-diagonal path.
-            self.is_traversable_from(from, intermediate_a) && self.is_traversable_from(intermediate_a, to) && 
-            self.is_traversable_from(from, intermediate_b) && self.is_traversable_from(intermediate_b, to)
+            self.is_traversable_from(from, intermediate_a)
+                && self.is_traversable_from(intermediate_a, to)
+                && self.is_traversable_from(from, intermediate_b)
+                && self.is_traversable_from(intermediate_b, to)
         }
     }
 
     fn coords_iter(&self) -> Map2DCoordsIter {
-        Map2DCoordsIter { width: self.width, height: self.height, curr_x: 0, curr_y: 0 }
+        Map2DCoordsIter {
+            width: self.width,
+            height: self.height,
+            curr_x: 0,
+            curr_y: 0,
+        }
     }
 
     fn free_states(&self) -> usize {
-        self.coords_iter().filter(|c| self.is_traversable(*c)).count()
+        self.coords_iter()
+            .filter(|c| self.is_traversable(*c))
+            .count()
     }
 
     fn neighbors(&self, tile: Coords2D) -> Vec<Coords2D> {
         let (x, y) = tile;
-        let all = vec![(x+1,y), (x+1, y+1), (x+1, y-1), 
-            (x,y+1), (x, y-1), (x-1, y), (x-1, y-1), (x-1, y+1)];
-        return all.into_iter().filter(|x| self.is_traversable_from(tile, *x)).collect();
+        let all = vec![
+            (x + 1, y),
+            (x + 1, y + 1),
+            (x + 1, y - 1),
+            (x, y + 1),
+            (x, y - 1),
+            (x - 1, y),
+            (x - 1, y - 1),
+            (x - 1, y + 1),
+        ];
+        return all.into_iter()
+            .filter(|x| self.is_traversable_from(tile, *x))
+            .collect();
     }
-
 }
 
-impl Index<Coords2D> for MovingAiMap  {
-
+impl Index<Coords2D> for MovingAiMap {
     type Output = char;
 
     fn index(&self, coords: Coords2D) -> &char {
         self.get_cell(coords)
     }
-    
 }
 
 /// Represent a row (scene) in a scene file.
@@ -306,5 +333,5 @@ pub struct SceneRecord {
     pub goal_pos: Coords2D,
 
     /// Optimal lenght of the path.
-    pub optimal_length: f64
+    pub optimal_length: f64,
 }

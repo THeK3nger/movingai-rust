@@ -1,5 +1,4 @@
 #[cfg(test)]
-
 extern crate movingai;
 
 use std::path::Path;
@@ -11,36 +10,31 @@ use movingai::parser::parse_scen_file;
 
 #[test]
 fn indexing() {
-    let test = MovingAiMap::new(
-        String::from("test"),
-        4,
-        6,
-        vec!['.'; 4*6]
-    );
-    assert_eq!(test[(0,3)], '.');
-    assert_eq!(test[(3,0)], '.');
+    let test = MovingAiMap::new(String::from("test"), 4, 6, vec!['.'; 4 * 6]);
+    assert_eq!(test[(0, 3)], '.');
+    assert_eq!(test[(3, 0)], '.');
 }
 
 #[test]
 fn parsing_map() {
     let map = parse_map_file(Path::new("./tests/arena.map")).unwrap();
-    assert_eq!(map.get_width(), 49 );
-    assert_eq!(*map.get_cell((3,0)), 'T');
+    assert_eq!(map.get_width(), 49);
+    assert_eq!(*map.get_cell((3, 0)), 'T');
 }
 
 #[test]
 fn parsing_scene() {
     let scen = parse_scen_file(Path::new("./tests/arena2.map.scen")).unwrap();
-    assert_eq!(scen[3].start_pos,(102, 165));
+    assert_eq!(scen[3].start_pos, (102, 165));
 }
 
 #[test]
 fn traversability() {
     let map = parse_map_file(Path::new("./tests/arena.map")).unwrap();
-    assert!(!map.is_traversable((0,0)));
-    assert!(map.is_traversable((5,2)));
-    assert!(!map.is_traversable_from((3,1),(3,0)));
-    assert!(!map.is_traversable_from((3,1),(3,7)));      
+    assert!(!map.is_traversable((0, 0)));
+    assert!(map.is_traversable((5, 2)));
+    assert!(!map.is_traversable_from((3, 1), (3, 0)));
+    assert!(!map.is_traversable_from((3, 1), (3, 7)));
 }
 
 #[test]
@@ -62,14 +56,14 @@ fn iterator() {
 #[test]
 fn states() {
     let map = parse_map_file(Path::new("./tests/arena.map")).unwrap();
-    assert_eq!(map.free_states(), 2054 );
+    assert_eq!(map.free_states(), 2054);
 }
 
 #[test]
 fn neighbours() {
     let map = parse_map_file(Path::new("./tests/arena.map")).unwrap();
-    let neigh = map.neighbors((19,1));
+    let neigh = map.neighbors((19, 1));
     assert_eq!(neigh.len(), 1);
-    assert!(neigh.contains(&(19,2)));
-    assert!(!neigh.contains(&(19,0)));
+    assert!(neigh.contains(&(19, 2)));
+    assert!(!neigh.contains(&(19, 0)));
 }
