@@ -51,7 +51,7 @@ pub fn parse_map_file(path: &path::Path) -> io::Result<MovingAiMap> {
         if line.trim() == "map" {
             parse_map = true;
         } else {
-            let param: Vec<&str> = line.split(" ").collect();
+            let param: Vec<&str> = line.split(' ').collect();
             if param.len() == 2 {
                 let key = param[0];
                 let value = param[1];
@@ -65,7 +65,7 @@ pub fn parse_map_file(path: &path::Path) -> io::Result<MovingAiMap> {
             }
         }
     }
-    return Ok(MovingAiMap::new(map_type, height, width, map));
+    Ok(MovingAiMap::new(map_type, height, width, map))
 }
 
 /// Parse a MovingAI `.scen` file.
@@ -104,7 +104,7 @@ pub fn parse_scen_file(path: &path::Path) -> io::Result<Vec<SceneRecord>> {
         if line.is_empty() {
             continue;
         }
-        let record: Vec<&str> = line.split("\t").collect();
+        let record: Vec<&str> = line.split('\t').collect();
         table.push(SceneRecord {
             bucket: record[0]
                 .parse::<u32>()
@@ -130,5 +130,5 @@ pub fn parse_scen_file(path: &path::Path) -> io::Result<Vec<SceneRecord>> {
         })
     }
 
-    return Ok(table);
+    Ok(table)
 }

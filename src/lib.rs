@@ -158,7 +158,7 @@ impl MovingAiMap {
     }
 }
 
-/// This represents a coordinate iterator for a Map2D.
+/// This represents a coordinate iterator for a `Map2D`.
 pub struct Map2DCoordsIter {
     width: usize,
     height: usize,
@@ -211,13 +211,8 @@ impl Map2D<char> for MovingAiMap {
         }
         let tile_char = self.get(tile);
         match *tile_char {
-            '.' => true,
-            'G' => true,
-            '@' => false,
-            'O' => false,
-            'T' => false,
-            'S' => true,
-            'W' => true,
+            '.' | 'G' | 'S' | 'W' => true,
+            '@' | 'O' | 'T' => false,
             _ => false, // Not recognized char.
         }
     }
@@ -298,9 +293,9 @@ impl Map2D<char> for MovingAiMap {
             (x - 1, y - 1),
             (x - 1, y + 1),
         ];
-        return all.into_iter()
+        all.into_iter()
             .filter(|x| self.is_traversable_from(tile, *x))
-            .collect();
+            .collect()
     }
 }
 
