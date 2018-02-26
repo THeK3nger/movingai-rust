@@ -43,7 +43,7 @@ fn iterator() {
     let arena_w = 49;
     let mut x = 0;
     let mut y = 0;
-    for c in map.coords_iter() {
+    for c in map.coords() {
         assert_eq!(c, (x, y));
         x += 1;
         if x >= arena_w {

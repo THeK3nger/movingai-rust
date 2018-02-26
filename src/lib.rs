@@ -103,7 +103,7 @@ pub trait Map2D<T> {
 
     /// Return an iterator returning all the coordinates in the map
     /// in row-major order.
-    fn coords_iter(&self) -> Map2DCoordsIter;
+    fn coords(&self) -> CoordsIter;
 
     /// Return the number of free states of a map.
     ///
@@ -159,14 +159,14 @@ impl MovingAiMap {
 }
 
 /// This represents a coordinate iterator for a `Map2D`.
-pub struct Map2DCoordsIter {
+pub struct CoordsIter {
     width: usize,
     height: usize,
     curr_x: usize,
     curr_y: usize,
 }
 
-impl Iterator for Map2DCoordsIter {
+impl Iterator for CoordsIter {
     type Item = Coords2D;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -266,8 +266,8 @@ impl Map2D<char> for MovingAiMap {
         }
     }
 
-    fn coords_iter(&self) -> Map2DCoordsIter {
-        Map2DCoordsIter {
+    fn coords(&self) -> CoordsIter {
+        CoordsIter {
             width: self.width,
             height: self.height,
             curr_x: 0,
@@ -276,7 +276,7 @@ impl Map2D<char> for MovingAiMap {
     }
 
     fn free_states(&self) -> usize {
-        self.coords_iter()
+        self.coords()
             .filter(|c| self.is_traversable(*c))
             .count()
     }
