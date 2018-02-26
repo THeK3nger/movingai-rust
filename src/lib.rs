@@ -21,12 +21,12 @@ pub type Coords2D = (usize, usize);
 /// representations.
 pub trait Map2D<T> {
     /// Every Map2D must have an height.
-    fn get_height(&self) -> usize;
+    fn height(&self) -> usize;
 
     /// Every Map2D must have a width.
-    fn get_width(&self) -> usize;
+    fn width(&self) -> usize;
 
-    /// In every Map2D must be possible to get an item.
+    /// In every Map2D must be possible to get a tile.
     ///
     /// ## Arguments:
     ///  * `coords` (Coords2D) : A tuple representing the desired coordinates.
@@ -43,10 +43,10 @@ pub trait Map2D<T> {
     ///        56,
     ///        vec!['.'; 54*56]
     ///    );
-    /// let result = mm.get_cell((23,4));
+    /// let result = mm.get((23,4));
     /// assert_eq!(*result, '.')
     /// ```
-    fn get_cell(&self, coords: Coords2D) -> &T;
+    fn get(&self, coords: Coords2D) -> &T;
 
     /// Check if the given coordinates are out of bound.
     ///
@@ -189,16 +189,16 @@ impl Iterator for Map2DCoordsIter {
 }
 
 impl Map2D<char> for MovingAiMap {
-    fn get_width(&self) -> usize {
+    fn width(&self) -> usize {
         self.width
     }
 
-    fn get_height(&self) -> usize {
+    fn height(&self) -> usize {
         self.height
     }
 
-    fn get_cell(&self, coords: Coords2D) -> &char {
-        &self.map[coords.1 * self.get_width() + coords.0]
+    fn get(&self, coords: Coords2D) -> &char {
+        &self.map[coords.1 * self.width() + coords.0]
     }
 
     fn is_out_of_bound(&self, coords: Coords2D) -> bool {
@@ -209,7 +209,7 @@ impl Map2D<char> for MovingAiMap {
         if self.is_out_of_bound(tile) {
             return false;
         }
-        let tile_char = self.get_cell(tile);
+        let tile_char = self.get(tile);
         match *tile_char {
             '.' => true,
             'G' => true,
@@ -234,8 +234,8 @@ impl Map2D<char> for MovingAiMap {
         }
         let diagonal = from.0 != to.0 && from.1 != to.1;
         let octile = self.map_type == "octile";
-        let tile_char = *(self.get_cell(to));
-        let from_char = *(self.get_cell(from));
+        let tile_char = *(self.get(to));
+        let from_char = *(self.get(from));
         if !octile || !diagonal {
             match (tile_char, from_char) {
                 ('.', _) => true,
@@ -308,7 +308,7 @@ impl Index<Coords2D> for MovingAiMap {
     type Output = char;
 
     fn index(&self, coords: Coords2D) -> &char {
-        self.get_cell(coords)
+        self.get(coords)
     }
 }
 

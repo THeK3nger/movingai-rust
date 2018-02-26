@@ -18,8 +18,8 @@ fn indexing() {
 #[test]
 fn parsing_map() {
     let map = parse_map_file(Path::new("./tests/arena.map")).unwrap();
-    assert_eq!(map.get_width(), 49);
-    assert_eq!(*map.get_cell((3, 0)), 'T');
+    assert_eq!(map.width(), 49);
+    assert_eq!(*map.get((3, 0)), 'T');
 }
 
 #[test]
