@@ -28,7 +28,7 @@ use movingai::parser::parse_map_file;
 
 fn main() {
     let map = parse_map_file(Path::new("./test/arena.map")).unwrap();
-    let width = map.get_width();
+    let width = map.width();
     let tile = map[(4,5)]; // Access map location at row 4 and column 5.
 }
 ```
