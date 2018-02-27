@@ -316,6 +316,7 @@ pub struct SceneRecord {
 
     /// Name of the map file associated to the scene.
     pub map_file: String,
+    // TODO: This is blocking a Copy and allocating to the heap. Can this be handled in a different way?
 
     /// Width of the map.
     pub map_width: usize,
