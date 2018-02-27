@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.6.0] - 2018-02-27
+
 ### Changed
   - Breaking. Now parsers need a `path::Path` structure instead of a `&str` for file paths.
   - Breaking. Some changes to make movingai-rust compatible to Rust API guidelines.
