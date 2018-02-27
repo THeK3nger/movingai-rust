@@ -309,12 +309,12 @@ impl Index<Coords2D> for MovingAiMap {
 }
 
 /// Represent a row (scene) in a scene file.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct SceneRecord {
     /// Used to cluster pqth queries in the benchmark.
     pub bucket: u32,
 
-    /// Neme of the map file associated to the scene.
+    /// Name of the map file associated to the scene.
     pub map_file: String,
 
     /// Width of the map.
