@@ -16,3 +16,11 @@ maintenance = { status = "actively-developed" }
 travis-ci = { repository = "THeK3nger/movingai-rust", branch = "master" }
 
 [dependencies]
+serde = { version = "1.0.27", optional = true, features = ["derive"] }
+serde_derive = { version = "1.0", optional = true }
+
+[dev-dependencies]
+serde_json = "1.0"
+
+[features]
+serialize = ["serde", "serde_derive"]
