@@ -14,9 +14,9 @@ pub mod parser;
 
 use std::ops::Index;
 
-#[cfg(feature = "serialize")]
+#[cfg(feature = "serde")]
 #[macro_use]
-extern crate serde_derive;
+extern crate serde;
 
 /// Store coorinates in the (x,y) format.
 pub type Coords2D = (usize, usize);
@@ -121,7 +121,7 @@ pub trait Map2D<T> {
 
 /// An immutable representation of a MovingAI map.
 #[derive(Debug)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MovingAiMap {
     map_type: String,
     height: usize,
@@ -315,7 +315,7 @@ impl Index<Coords2D> for MovingAiMap {
 
 /// Represent a row (scene) in a scene file.
 #[derive(Debug, PartialEq, Clone)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct SceneRecord {
     /// Used to cluster pqth queries in the benchmark.
     pub bucket: u32,

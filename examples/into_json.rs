@@ -3,9 +3,7 @@ extern crate movingai;
 
 use std::path::Path;
 
-use movingai::Map2D;
 use movingai::parser::parse_map_file;
-
 
 fn main() {
     let map = parse_map_file(Path::new("./tests/arena.map")).unwrap();
