@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.7.0] - 2018-03-14
+
 ## Added
 
   - Add serialization/deserialization using `serde`. You can now serialize/deserialize maps and scen files using `serde` as optional dependency by activating the `serde` feature. Support JSON/YAML and a lot of formats!
