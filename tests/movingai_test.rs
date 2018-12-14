@@ -1,5 +1,4 @@
-#[cfg(test)]
-extern crate movingai;
+
 
 use std::path::Path;
 

@@ -1,5 +1,5 @@
-extern crate serde_json;
-extern crate movingai;
+use serde_json;
+
 
 use std::path::Path;
 
