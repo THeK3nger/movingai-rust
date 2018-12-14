@@ -18,7 +18,7 @@ Some of the functionalities are:
  - Get the list of neighbors coordinates of a specific tile.
  - [TO DO] Convert bitmaps into `.map` files.
  - And more things I still need to decide. :D
- - Serialize/Deserialzie `.map` and `.scen` files into JSON/YAML using serde (activate `--feature serde`)
+ - Serialize/Deserialzie `.map` and `.scen` files into JSON/YAML using serde (activate `--features serde`)
 
 ## How to use
 
