@@ -4,8 +4,8 @@ use std::fs::File;
 use std::path;
 use std::io;
 use std::io::prelude::*;
-use MovingAiMap;
-use SceneRecord;
+use crate::MovingAiMap;
+use crate::SceneRecord;
 
 /// Parse a MovingAI `.map` file.
 ///
