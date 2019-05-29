@@ -3,8 +3,6 @@
 ![Cargo Version](https://img.shields.io/crates/v/movingai.svg)
 [![](https://tokei.rs/b1/github/THeK3nger/movingai-rust)](https://github.com/THeK3nger/movingai-rust)
 
-**Still in development! Help is encouraged for stabilizing the API.**
-
 Map/Scenario Parser for the [MovingAI benchmark](http://www.movingai.com/benchmarks) format. It offers a quick way to parse scenario and map files, plus some map utility to manage and query information from them.
 
 ## Map Features
