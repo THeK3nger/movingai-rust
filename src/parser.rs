@@ -34,6 +34,33 @@ pub fn parse_map_file(path: &path::Path) -> io::Result<MovingAiMap> {
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
 
+    return parse_map(&contents);
+}
+
+/// Parse a string representing a MovingAI `.map`.
+///
+/// # Arguments
+///  * `contents` a string in the `.map` format.
+///
+/// # Returns
+///  It returns the parsed map as a `MovingAiMap` or an `Err`.
+///
+/// # Panics
+///  For the time, it panics if the map format it is not correct.
+///  TODO: Catch all these errors and encode them into `Result`.
+///
+/// # Errors
+///  Return errors if it is not possible to open the specified file.
+///
+/// # Examples
+///
+/// ```
+/// use std::path::Path;
+/// use movingai::parser::parse_map;
+///
+/// let map = parse_map("type octile\nheight 1\nwidth 1\nmap\nT").unwrap();
+/// ```
+pub fn parse_map(contents: &str) -> io::Result<MovingAiMap> {
     let mut height: usize = 0;
     let mut width: usize = 0;
     let mut map_type: String = String::from("empty");
@@ -94,6 +121,32 @@ pub fn parse_scen_file(path: &path::Path) -> io::Result<Vec<SceneRecord>> {
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
 
+    return parse_scen(&contents);
+}
+
+/// Parse a string representing a MovingAI `.scen`.
+///
+/// # Arguments
+///  * `contents` the string representing the `.scen` file.
+///
+/// # Returns
+///  It returns the parsed map as a `Vec<SceneRecord>` or an `Err`.
+///
+/// # Panics
+///  For the time, it panics if the map format it is not correct.
+///
+/// # Errors
+///  Return errors if it is not possible to open the specified file.
+///
+/// # Examples
+///
+/// ```
+/// use std::path::Path;
+/// use movingai::parser::parse_scen;
+///
+/// let scen = parse_scen("version 1\n0	maps/dao/arena.map	49	49	1	11	1	12	1").unwrap();
+/// ```
+pub fn parse_scen(contents: &str) -> io::Result<Vec<SceneRecord>> {
     let mut table: Vec<SceneRecord> = Vec::new();
 
     for line in contents.lines() {
