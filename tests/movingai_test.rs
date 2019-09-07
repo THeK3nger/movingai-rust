@@ -1,11 +1,9 @@
-
-
 use std::path::Path;
 
-use movingai::Map2D;
-use movingai::MovingAiMap;
 use movingai::parser::parse_map_file;
 use movingai::parser::parse_scen_file;
+use movingai::Map2D;
+use movingai::MovingAiMap;
 
 #[test]
 fn indexing() {

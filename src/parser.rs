@@ -1,11 +1,10 @@
-/// Contains all the parser functions.
-
-use std::fs::File;
-use std::path;
-use std::io;
-use std::io::prelude::*;
 use crate::MovingAiMap;
 use crate::SceneRecord;
+/// Contains all the parser functions.
+use std::fs::File;
+use std::io;
+use std::io::prelude::*;
+use std::path;
 
 /// Parse a MovingAI `.map` file.
 ///

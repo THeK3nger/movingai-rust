@@ -1,5 +1,7 @@
-#![doc(html_logo_url = "https://www.movingai.com/images/mai3.png",
-       html_favicon_url = "https://www.movingai.com/images/mai3.png")]
+#![doc(
+    html_logo_url = "https://www.movingai.com/images/mai3.png",
+    html_favicon_url = "https://www.movingai.com/images/mai3.png"
+)]
 #![deny(missing_docs)]
 
 //!
@@ -282,9 +284,7 @@ impl Map2D<char> for MovingAiMap {
     }
 
     fn free_states(&self) -> usize {
-        self.coords()
-            .filter(|c| self.is_traversable(*c))
-            .count()
+        self.coords().filter(|c| self.is_traversable(*c)).count()
     }
 
     fn neighbors(&self, tile: Coords2D) -> Vec<Coords2D> {
@@ -323,7 +323,6 @@ pub struct SceneRecord {
     /// Name of the map file associated to the scene.
     pub map_file: String,
     // TODO: This is blocking a Copy and allocating to the heap. Can this be handled in a different way?
-
     /// Width of the map.
     pub map_width: usize,
 
