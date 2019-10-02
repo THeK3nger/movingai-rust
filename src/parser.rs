@@ -34,7 +34,7 @@ pub fn parse_map_file(path: &path::Path) -> io::Result<MovingAiMap> {
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
 
-    return parse_map(&contents);
+    parse_map(&contents)
 }
 
 /// Parse a string representing a MovingAI `.map`.
@@ -121,7 +121,7 @@ pub fn parse_scen_file(path: &path::Path) -> io::Result<Vec<SceneRecord>> {
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
 
-    return parse_scen(&contents);
+    parse_scen(&contents)
 }
 
 /// Parse a string representing a MovingAI `.scen`.
