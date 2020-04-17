@@ -13,7 +13,7 @@ edition = "2018"
 
 [badges]
 
-maintenance = { status = "actively-developed" }
+maintenance = { status = "passively-maintained" }
 travis-ci = { repository = "THeK3nger/movingai-rust", branch = "master" }
 
 [dependencies]
