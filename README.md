@@ -1,4 +1,5 @@
 # movingai-rust
+
 ![Travis Build](https://api.travis-ci.org/THeK3nger/movingai-rust.svg?branch=master)
 ![Cargo Version](https://img.shields.io/crates/v/movingai.svg)
 [![](https://tokei.rs/b1/github/THeK3nger/movingai-rust)](https://github.com/THeK3nger/movingai-rust)
@@ -11,12 +12,12 @@ The create not only parse a map and scene file, it also provide an object for ea
 
 Some of the functionalities are:
 
- - Easy idiomatic access to the map date, such as width, height and tiles at specific coordinate.
- - Check if a tile is traversable or not according the MovingAI format rules.
- - Get the list of neighbors coordinates of a specific tile.
- - [TO DO] Convert bitmaps into `.map` files.
- - And more things I still need to decide. :D
- - Serialize/Deserialzie `.map` and `.scen` files into JSON/YAML using serde (activate `--features serde`)
+- Easy idiomatic access to the map date, such as width, height and tiles at specific coordinate.
+- Check if a tile is traversable or not according the MovingAI format rules.
+- Get the list of neighbors coordinates of a specific tile.
+- [TO DO] Convert bitmaps into `.map` files.
+- And more things I still need to decide. :D
+- Serialize/Deserialzie `.map` and `.scen` files into JSON/YAML using serde (activate `--features serde`)
 
 ## How to use
 
@@ -67,7 +68,7 @@ fn shortest_path(map: &MovingAiMap, start: Coords2D, goal: Coords2D) -> Option<f
     // Goal not reachable
     None
 }
-``` 
+```
 
 and to write benchmark over a scen file!
 
@@ -90,4 +91,12 @@ fn main() {
         }
     }
 }
+```
+
+## Why `cargo test` is failing?
+
+Note that tests need to be compiled with the `serde` feature enabled.
+
+```sh
+cargo test --feature=serde
 ```
