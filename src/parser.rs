@@ -1,3 +1,4 @@
+#![allow(clippy::tabs_in_doc_comments)]
 use crate::MovingAiMap;
 use crate::SceneRecord;
 /// Contains all the parser functions.
