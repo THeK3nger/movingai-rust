@@ -4,19 +4,18 @@
 ![Cargo Version](https://img.shields.io/crates/v/movingai.svg)
 [![](https://tokei.rs/b1/github/THeK3nger/movingai-rust)](https://github.com/THeK3nger/movingai-rust)
 
-Map/Scenario Parser for the [MovingAI benchmark](http://www.movingai.com/benchmarks) format. It offers a quick way to parse scenario and map files, plus some map utility to manage and query information from them.
+Map/Scenario Parser for the [MovingAI benchmark](http://www.movingai.com/benchmarks) format. It offers a quick way to parse scenario and map files, with the addition of some utilities to manage and query information from the maps.
 
 ## Map Features
 
-The create not only parse a map and scene file, it also provide an object for easy interacting with it.
+The crate parses map and scene files and provides several function for easy interaction and query.
 
 Some of the functionalities are:
 
-- Easy idiomatic access to the map date, such as width, height and tiles at specific coordinate.
+- Easy idiomatic access to the map data such as width, height and tiles at a specific coordinate.
 - Check if a tile is traversable or not according the MovingAI format rules.
-- Get the list of neighbors coordinates of a specific tile.
+- Get the list of accessible neighbors from a specific tile.
 - [TO DO] Convert bitmaps into `.map` files.
-- And more things I still need to decide. :D
 - Serialize/Deserialzie `.map` and `.scen` files into JSON/YAML using serde (activate `--features serde`)
 
 ## How to use
@@ -34,7 +33,7 @@ fn main() {
 }
 ```
 
-With this library is to use for implementing pathfinding algorithms:
+As an example, you can see how we can use this crate to easily implement the A* pathfinding algorithm.
 
 ```rust
 // A* shortest path algorithm.
@@ -70,7 +69,7 @@ fn shortest_path(map: &MovingAiMap, start: Coords2D, goal: Coords2D) -> Option<f
 }
 ```
 
-and to write benchmark over a scen file!
+And in this example we can see how to write a benchmark over a scen file.
 
 ```rust
 fn main() {
