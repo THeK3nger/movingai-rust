@@ -47,7 +47,7 @@ pub trait Map2D<T> {
     ///        String::from("test"),
     ///        54,
     ///        56,
-    ///        vec!['.'; 54*56]
+    ///        Box::new(['.'; 54*56])
     ///    );
     /// let result = mm.get((23,4));
     /// assert_eq!(*result, '.')
@@ -66,7 +66,7 @@ pub trait Map2D<T> {
     /// #       String::from("test"),
     /// #       54,
     /// #       56,
-    /// #       vec!['.'; 54*56]
+    /// #       Box::new(['.'; 54*56])
     /// #   );
     /// assert!(mm.is_out_of_bound((76,3)));
     /// assert!(!mm.is_out_of_bound((23,23)));
@@ -128,7 +128,7 @@ pub struct MovingAiMap {
     map_type: String,
     height: usize,
     width: usize,
-    map: Vec<char>,
+    map: Box<[char]>,
 }
 
 impl MovingAiMap {
@@ -144,7 +144,7 @@ impl MovingAiMap {
     ///
     /// The `new` call will panic id the size of the map vector is different
     /// from `heigth*width`.
-    pub fn new(map_type: String, height: usize, width: usize, map: Vec<char>) -> MovingAiMap {
+    pub fn new(map_type: String, height: usize, width: usize, map: Box<[char]>) -> MovingAiMap {
         assert_eq!(map.len(), height * width);
         MovingAiMap {
             map_type,
