@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- 💣 BREAKING. Now the internal map representation uses a boxed slice. If you manually created a map using `MovingAIMap::new()`, then the last parameter should now be a boxed slice (and not a vector like before). If you only used to parse maps from files/strings, then there is no problem.
+
 ## [1.1.0] - 2019-09-07
 
 ### Added
