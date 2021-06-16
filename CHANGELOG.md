@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.2.0] - 2021-06-16
+
 ### Changed
 
-- 💣 BREAKING. Now the internal map representation uses a boxed slice. If you manually created a map using `MovingAIMap::new()`, then the last parameter should now be a boxed slice (and not a vector like before). If you only used to parse maps from files/strings, then there is no problem.
+- Now the internal map representation uses a boxed slice. This improve the memory footprint of parsed maps if you are keeping in memory a lot of them.
+- New constructor `MovingAIMap::new_from_slice()`. This new constructor allow to directly a boxed slice for the `map` parameter. The old `MovingAIMap::new()` is still the same.
 
 ## [1.1.0] - 2019-09-07
 
