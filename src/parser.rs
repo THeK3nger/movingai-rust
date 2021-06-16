@@ -92,7 +92,7 @@ pub fn parse_map(contents: &str) -> io::Result<MovingAiMap> {
             }
         }
     }
-    Ok(MovingAiMap::new(map_type, height, width, map.into_boxed_slice()))
+    Ok(MovingAiMap::new(map_type, height, width, map))
 }
 
 /// Parse a MovingAI `.scen` file.

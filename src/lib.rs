@@ -43,7 +43,7 @@ pub trait Map2D<T> {
     /// use movingai::Map2D;
     /// use movingai::MovingAiMap;
     ///
-    /// let mm = MovingAiMap::new(
+    /// let mm = MovingAiMap::new_from_slice(
     ///        String::from("test"),
     ///        54,
     ///        56,
@@ -62,7 +62,7 @@ pub trait Map2D<T> {
     /// # use movingai::Map2D;
     /// # use movingai::MovingAiMap;
     /// #
-    /// # let mm = MovingAiMap::new(
+    /// # let mm = MovingAiMap::new_from_slice(
     /// #       String::from("test"),
     /// #       54,
     /// #       56,
@@ -144,13 +144,30 @@ impl MovingAiMap {
     ///
     /// The `new` call will panic id the size of the map vector is different
     /// from `heigth*width`.
-    pub fn new(map_type: String, height: usize, width: usize, map: Box<[char]>) -> MovingAiMap {
+    pub fn new(map_type: String, height: usize, width: usize, map: Vec<char>) -> MovingAiMap {
+        return MovingAiMap::new_from_slice(map_type, height, width, map.into_boxed_slice());
+    }
+
+
+    /// Create a new `MovingAIMap` object from basic components.
+    ///
+    /// # Arguments
+    ///  * `map_type`: The type of map you are registering. Usually `octile`.
+    ///  * `height`: the height of the map.
+    ///  * `width`: the width of the map.
+    ///  * `map`: A boxed slice representing the map in row-major order.
+    ///
+    /// # Panics
+    ///
+    /// The `new` call will panic id the size of the map vector is different
+    /// from `heigth*width`.
+    pub fn new_from_slice(map_type: String, height: usize, width: usize, map: Box<[char]>) -> MovingAiMap {
         assert_eq!(map.len(), height * width);
         MovingAiMap {
             map_type,
             height,
             width,
-            map,
+            map
         }
     }
 

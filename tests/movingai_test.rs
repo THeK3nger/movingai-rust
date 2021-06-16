@@ -7,7 +7,7 @@ use movingai::MovingAiMap;
 
 #[test]
 fn indexing() {
-    let test = MovingAiMap::new(String::from("test"), 4, 6, Box::new(['.'; 4 * 6]));
+    let test = MovingAiMap::new(String::from("test"), 4, 6, vec!['.'; 4 * 6]);
     assert_eq!(test[(0, 3)], '.');
     assert_eq!(test[(3, 0)], '.');
 }
