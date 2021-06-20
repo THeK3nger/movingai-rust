@@ -1,6 +1,6 @@
 #![doc(
-    html_logo_url = "https://www.movingai.com/images/mai3.png",
-    html_favicon_url = "https://www.movingai.com/images/mai3.png"
+    html_logo_url = "https://github.com/THeK3nger/movingai-rust/blob/37ad04b72a2e9e8fb7f794c7f1be176fee99b67e/assets/ma.png",
+    html_favicon_url = "https://github.com/THeK3nger/movingai-rust/blob/37ad04b72a2e9e8fb7f794c7f1be176fee99b67e/assets/ma.png"
 )]
 #![deny(missing_docs)]
 
