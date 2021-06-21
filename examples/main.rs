@@ -113,21 +113,29 @@ fn shortest_path(map: &MovingAiMap, start: Coords2D, goal: Coords2D) -> Option<f
 }
 
 fn main() {
-    let map = parse_map_file(Path::new("./tests/arena.map")).unwrap();
-    let scenes = parse_scen_file(Path::new("./tests/arena.map.scen")).unwrap();
+    let map = parse_map_file(Path::new("./tests/maze512-32-9.map")).unwrap();
+    let scenes = parse_scen_file(Path::new("./tests/maze512-32-9.map.scen")).unwrap();
     for scene in scenes {
         let start = scene.start_pos;
         let goal = scene.goal_pos;
+        let optimal = scene.optimal_length;
         let t = Instant::now();
-        match shortest_path(&map, (1, 3), (4, 3)) {
-            Some(_) => {
+        match shortest_path(&map, start, goal) {
+            Some(g) => {
                 let duration = t.elapsed();
-                let seconds = duration.as_secs();
-                let ms = (duration.subsec_nanos() as f64) / 1_000_000.0;
-                println!(
-                    "{:?} -> {:?} \tin {:?} seconds and {:?} ms",
-                    start, goal, seconds, ms
-                );
+                let millis = duration.as_millis();
+                let delta = (optimal - g).abs();
+                if delta > 0.00001 {
+                    println!(
+                        "{:?} -> {:?} = {:.5} \t\tin {:.5} ms (Δ{:.5})",
+                        start, goal, g, millis, delta
+                    );
+                } else {
+                    println!(
+                        "{:?} -> {:?} = {:.5} \t\tin {:.5} ms",
+                        start, goal, g, millis
+                    );
+                }
             }
             None => println!("None"),
         }
