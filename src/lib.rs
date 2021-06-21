@@ -148,7 +148,6 @@ impl MovingAiMap {
         return MovingAiMap::new_from_slice(map_type, height, width, map.into_boxed_slice());
     }
 
-
     /// Create a new `MovingAIMap` object from basic components.
     ///
     /// # Arguments
@@ -161,13 +160,18 @@ impl MovingAiMap {
     ///
     /// The `new` call will panic id the size of the map vector is different
     /// from `heigth*width`.
-    pub fn new_from_slice(map_type: String, height: usize, width: usize, map: Box<[char]>) -> MovingAiMap {
+    pub fn new_from_slice(
+        map_type: String,
+        height: usize,
+        width: usize,
+        map: Box<[char]>,
+    ) -> MovingAiMap {
         assert_eq!(map.len(), height * width);
         MovingAiMap {
             map_type,
             height,
             width,
-            map
+            map,
         }
     }
 
