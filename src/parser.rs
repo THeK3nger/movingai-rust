@@ -1,6 +1,7 @@
 #![allow(clippy::tabs_in_doc_comments)]
-use crate::MovingAiMap;
-use crate::SceneRecord;
+use crate::map2d::MovingAiMap;
+use crate::map2d::SceneRecord;
+
 /// Contains all the parser functions.
 use std::fs::File;
 use std::io;
