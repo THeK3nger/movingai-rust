@@ -125,7 +125,7 @@ impl MovingAiMap {
     /// The `new` call will panic id the size of the map vector is different
     /// from `heigth*width`.
     pub fn new(map_type: String, height: usize, width: usize, map: Vec<char>) -> MovingAiMap {
-        return MovingAiMap::new_from_slice(map_type, height, width, map.into_boxed_slice());
+        MovingAiMap::new_from_slice(map_type, height, width, map.into_boxed_slice())
     }
 
     /// Create a new `MovingAIMap` object from basic components.
