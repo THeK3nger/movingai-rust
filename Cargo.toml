@@ -9,7 +9,7 @@ homepage = "https://github.com/THeK3nger/movingai-rust"
 repository = "https://github.com/THeK3nger/movingai-rust"
 readme = "README.md"
 license = "MIT"
-edition = "2018"
+edition = "2021"
 
 [badges]
 
