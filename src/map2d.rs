@@ -169,9 +169,13 @@ impl MovingAiMap {
 
 /// This represents a coordinate iterator for a `Map2D`.
 pub struct CoordsIter {
+    /// The map width.
     pub width: usize,
+    /// The map height.
     pub height: usize,
+    /// The x coordinate of **the next** step.
     pub curr_x: usize,
+    /// The y coordinate of **the next** step.
     pub curr_y: usize,
 }
 
@@ -193,6 +197,8 @@ impl Iterator for CoordsIter {
             self.curr_y += 1;
         }
         // But we return the current one!
+        // This simplifies the implementation
+        // (better handling of the edge case of the first coordinate).
         Some((x, y))
     }
 }
