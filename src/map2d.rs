@@ -169,10 +169,10 @@ impl MovingAiMap {
 
 /// This represents a coordinate iterator for a `Map2D`.
 pub struct CoordsIter {
-    width: usize,
-    height: usize,
-    curr_x: usize,
-    curr_y: usize,
+    pub width: usize,
+    pub height: usize,
+    pub curr_x: usize,
+    pub curr_y: usize,
 }
 
 impl Iterator for CoordsIter {
