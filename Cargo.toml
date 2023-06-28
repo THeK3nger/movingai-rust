@@ -17,7 +17,7 @@ maintenance = { status = "passively-maintained" }
 travis-ci = { repository = "THeK3nger/movingai-rust", branch = "master" }
 
 [dependencies]
-serde = { version = "1.0.164", optional = true, features = ["derive"] }
+serde = { version = "1.0.198", optional = true, features = ["derive"] }
 
 [dev-dependencies]
-serde_json = "1.0.99"
+serde_json = "1.0.116"
