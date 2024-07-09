@@ -1,6 +1,6 @@
 use std::ops::Index;
 
-/// Store coorinates in the (x,y) format.
+/// Store coordinates in the (x,y) format.
 pub type Coords2D = (usize, usize);
 
 /// A trait representing common operations that can be performed on 2D Maps
@@ -77,7 +77,7 @@ pub trait Map2D<T> {
     ///
     /// In particular:
     ///  - A water tile (`W`) can be traversed but only if the agent does not
-    ///    comes from regular terrain (`.` and `G`).
+    ///    come from regular terrain (`.` and `G`).
     ///  - A swamp tile (`S`) can be traversed only if the agent comes from
     ///    regular terrain.
     ///
@@ -93,7 +93,7 @@ pub trait Map2D<T> {
 
     /// Return the number of free states of a map.
     ///
-    /// For "free state" we means _any_ tile that can _potentially_
+    /// For "free state" we mean _any_ tile that can _potentially_
     /// be traversed.
     fn free_states(&self) -> usize;
 
@@ -204,12 +204,12 @@ impl Iterator for CoordsIter {
 }
 
 impl Map2D<char> for MovingAiMap {
-    fn width(&self) -> usize {
-        self.width
-    }
-
     fn height(&self) -> usize {
         self.height
+    }
+
+    fn width(&self) -> usize {
+        self.width
     }
 
     fn get(&self, coords: Coords2D) -> &char {
