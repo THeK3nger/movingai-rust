@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.0.0 ] - 2025-03-11
+
+### Breaking Changes
+
+- `Map2D:new()` now returns `Result<MovingAiMap, ParseError>` instead of panicking if there are parsing errors or wrong height and width dimensions.
+
 ## [1.3.1] - 2024-04-26
 
 ### Minor

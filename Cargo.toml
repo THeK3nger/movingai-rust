@@ -1,7 +1,7 @@
 [package]
 name = "movingai"
 description = "MovingAI Benchmark Map/Scen File Parser"
-version = "1.3.1"
+version = "2.0.0"
 authors = ["Davide Aversa <thek3nger@gmail.com>"]
 keywords = ["pathfinding", "benchmark", "parser"]
 categories = ["parsing", "science", "simulation"]
@@ -17,7 +17,7 @@ maintenance = { status = "passively-maintained" }
 travis-ci = { repository = "THeK3nger/movingai-rust", branch = "master" }
 
 [dependencies]
-serde = { version = "1.0.204", optional = true, features = ["derive"] }
+serde = { version = "1.0.219", optional = true, features = ["derive"] }
 
 [dev-dependencies]
-serde_json = "1.0.120"
+serde_json = "1.0.140"
