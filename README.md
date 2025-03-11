@@ -32,7 +32,7 @@ fn main() {
 }
 ```
 
-As an example, you can see how we can use this crate to easily implement the A* pathfinding algorithm.
+As an example, you can see how we can use this crate to easily implement the A\* pathfinding algorithm.
 
 ```rust
 // A* shortest path algorithm.
@@ -96,5 +96,5 @@ fn main() {
 Note that tests need to be compiled with the `serde` feature enabled.
 
 ```sh
-cargo test --feature=serde
+cargo test --features serde
 ```

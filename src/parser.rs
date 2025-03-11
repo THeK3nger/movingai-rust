@@ -65,35 +65,42 @@ pub fn parse_map_file(path: &path::Path) -> io::Result<MovingAiMap> {
 pub fn parse_map(contents: &str) -> io::Result<MovingAiMap> {
     let mut height: usize = 0;
     let mut width: usize = 0;
-    let mut map_type: String = String::from("empty");
+    let mut map_type = String::from("empty");
     let mut map: Vec<char> = Vec::new();
 
     let mut parse_map = false;
     for line in contents.lines() {
         if parse_map {
-            for c in line.chars() {
-                map.push(c);
-            }
+            map.extend(line.chars());
             continue;
         }
         if line.trim() == "map" {
             parse_map = true;
         } else {
-            let param: Vec<&str> = line.split(' ').collect();
+            let param: Vec<&str> = line.split_whitespace().collect();
             if param.len() == 2 {
                 let key = param[0];
                 let value = param[1];
-                if key == "type" {
-                    map_type = String::from(value);
-                } else if key == "height" {
-                    height = value.parse::<usize>().expect("Error parsing map height.");
-                } else if key == "width" {
-                    width = value.parse::<usize>().expect("Error parsing map width.");
+                match key {
+                    "type" => map_type = value.to_string(),
+                    "height" => {
+                        height = value.parse::<usize>().map_err(|_| {
+                            io::Error::new(io::ErrorKind::InvalidData, "Error parsing map height.")
+                        })?
+                    }
+                    "width" => {
+                        width = value.parse::<usize>().map_err(|_| {
+                            io::Error::new(io::ErrorKind::InvalidData, "Error parsing map width.")
+                        })?
+                    }
+                    _ => {}
                 }
             }
         }
     }
-    Ok(MovingAiMap::new(map_type, height, width, map))
+
+    MovingAiMap::new(map_type, height, width, map)
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
 }
 
 /// Parse a MovingAI `.scen` file.
@@ -160,27 +167,35 @@ pub fn parse_scen(contents: &str) -> io::Result<Vec<SceneRecord>> {
         }
         let record: Vec<&str> = line.split('\t').collect();
         table.push(SceneRecord {
-            bucket: record[0]
-                .parse::<u32>()
-                .expect("Error parsing bucket size."),
+            bucket: record[0].parse::<u32>().map_err(|_| {
+                io::Error::new(io::ErrorKind::InvalidData, "Error parsing bucket size.")
+            })?,
             map_file: String::from(record[1]),
-            map_width: record[2]
-                .parse::<usize>()
-                .expect("Error parsing map width."),
-            map_height: record[3]
-                .parse::<usize>()
-                .expect("Error parsing map height."),
+            map_width: record[2].parse::<usize>().map_err(|_| {
+                io::Error::new(io::ErrorKind::InvalidData, "Error parsing map width.")
+            })?,
+            map_height: record[3].parse::<usize>().map_err(|_| {
+                io::Error::new(io::ErrorKind::InvalidData, "Error parsing map height.")
+            })?,
             start_pos: (
-                record[4].parse::<usize>().expect("Error parsing start x."),
-                record[5].parse::<usize>().expect("Error parsing start y."),
+                record[4].parse::<usize>().map_err(|_| {
+                    io::Error::new(io::ErrorKind::InvalidData, "Error parsing start x.")
+                })?,
+                record[5].parse::<usize>().map_err(|_| {
+                    io::Error::new(io::ErrorKind::InvalidData, "Error parsing start y.")
+                })?,
             ),
             goal_pos: (
-                record[6].parse::<usize>().expect("Error parsing goal x"),
-                record[7].parse::<usize>().expect("Error parsing goal y"),
+                record[6].parse::<usize>().map_err(|_| {
+                    io::Error::new(io::ErrorKind::InvalidData, "Error parsing goal x")
+                })?,
+                record[7].parse::<usize>().map_err(|_| {
+                    io::Error::new(io::ErrorKind::InvalidData, "Error parsing goal y")
+                })?,
             ),
-            optimal_length: record[8]
-                .parse::<f64>()
-                .expect("Erro parsing optimal length."),
+            optimal_length: record[8].parse::<f64>().map_err(|_| {
+                io::Error::new(io::ErrorKind::InvalidData, "Error parsing optimal length.")
+            })?,
         })
     }
 

@@ -1,4 +1,4 @@
-use std::ops::Index;
+use std::{fmt, ops::Index};
 
 /// Store coordinates in the (x,y) format.
 pub type Coords2D = (usize, usize);
@@ -101,6 +101,23 @@ pub trait Map2D<T> {
     fn neighbors(&self, tile: Coords2D) -> Vec<Coords2D>;
 }
 
+#[derive(Debug)]
+/// An error that can occur when parsing a map.
+pub enum ParseError {
+    /// The size of the map does not match the provided height * width.
+    InvalidMapSize,
+}
+
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ParseError::InvalidMapSize => {
+                write!(f, "Map size does not match the provided height * width")
+            }
+        }
+    }
+}
+
 /// An immutable representation of a MovingAI map.
 #[derive(Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -120,12 +137,24 @@ impl MovingAiMap {
     ///  * `width`: the width of the map.
     ///  * `map`: A vector representing the map in row-major order.
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// The `new` call will panic id the size of the map vector is different
-    /// from `heigth*width`.
-    pub fn new(map_type: String, height: usize, width: usize, map: Vec<char>) -> MovingAiMap {
-        MovingAiMap::new_from_slice(map_type, height, width, map.into_boxed_slice())
+    /// Returns an error if the size of the map vector is different from `height * width`.
+    pub fn new(
+        map_type: String,
+        height: usize,
+        width: usize,
+        map: Vec<char>,
+    ) -> Result<MovingAiMap, ParseError> {
+        if map.len() != height * width {
+            return Err(ParseError::InvalidMapSize);
+        }
+        Ok(MovingAiMap::new_from_slice(
+            map_type,
+            height,
+            width,
+            map.into_boxed_slice(),
+        ))
     }
 
     /// Create a new `MovingAIMap` object from basic components.
