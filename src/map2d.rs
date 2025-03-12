@@ -28,7 +28,7 @@ pub trait Map2D<T> {
     ///        54,
     ///        56,
     ///        Box::new(['.'; 54*56])
-    ///    );
+    ///    ).unwrap();
     /// let result = mm.get((23,4));
     /// assert_eq!(*result, '.')
     /// ```
@@ -47,7 +47,7 @@ pub trait Map2D<T> {
     /// #       54,
     /// #       56,
     /// #       Box::new(['.'; 54*56])
-    /// #   );
+    /// #   ).unwrap();
     /// assert!(mm.is_out_of_bound((76,3)));
     /// assert!(!mm.is_out_of_bound((23,23)));
     /// ```
@@ -149,12 +149,7 @@ impl MovingAiMap {
         if map.len() != height * width {
             return Err(ParseError::InvalidMapSize);
         }
-        Ok(MovingAiMap::new_from_slice(
-            map_type,
-            height,
-            width,
-            map.into_boxed_slice(),
-        ))
+        MovingAiMap::new_from_slice(map_type, height, width, map.into_boxed_slice())
     }
 
     /// Create a new `MovingAIMap` object from basic components.
@@ -165,23 +160,24 @@ impl MovingAiMap {
     ///  * `width`: the width of the map.
     ///  * `map`: A boxed slice representing the map in row-major order.
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// The `new` call will panic id the size of the map vector is different
-    /// from `heigth*width`.
+    /// Returns an error if the size of the map vector is different from `height * width`.
     pub fn new_from_slice(
         map_type: String,
         height: usize,
         width: usize,
         map: Box<[char]>,
-    ) -> MovingAiMap {
-        assert_eq!(map.len(), height * width);
-        MovingAiMap {
+    ) -> Result<MovingAiMap, ParseError> {
+        if map.len() != height * width {
+            return Err(ParseError::InvalidMapSize);
+        }
+        Ok(MovingAiMap {
             map_type,
             height,
             width,
             map,
-        }
+        })
     }
 
     fn coordinates_connect(&self, coords_a: Coords2D, coords_b: Coords2D) -> bool {
