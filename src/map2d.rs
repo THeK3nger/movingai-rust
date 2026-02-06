@@ -3,6 +3,27 @@ use std::{fmt, ops::Index};
 /// Store coordinates in the (x,y) format.
 pub type Coords2D = (usize, usize);
 
+/// Internal enum representing the type of map connectivity.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+enum MapType {
+    /// 8-connected grid (diagonal movement allowed)
+    Octile,
+    /// 4-connected grid (only cardinal directions)
+    FourConnected,
+}
+
+impl MapType {
+    /// Parse a map type string into the enum.
+    /// Defaults to FourConnected for unknown types.
+    fn from_string(s: &str) -> Self {
+        match s.to_lowercase().as_str() {
+            "octile" => MapType::Octile,
+            _ => MapType::FourConnected,
+        }
+    }
+}
+
 /// A trait representing common operations that can be performed on 2D Maps
 /// representations.
 pub trait Map2D<T> {
@@ -122,7 +143,7 @@ impl fmt::Display for ParseError {
 #[derive(Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MovingAiMap {
-    map_type: String,
+    map_type: MapType,
     height: usize,
     width: usize,
     map: Box<[char]>,
@@ -173,7 +194,7 @@ impl MovingAiMap {
             return Err(ParseError::InvalidMapSize);
         }
         Ok(MovingAiMap {
-            map_type,
+            map_type: MapType::from_string(&map_type),
             height,
             width,
             map,
@@ -183,11 +204,12 @@ impl MovingAiMap {
     fn coordinates_connect(&self, coords_a: Coords2D, coords_b: Coords2D) -> bool {
         let (x1, y1) = (coords_a.0 as isize, coords_a.1 as isize);
         let (x2, y2) = (coords_b.0 as isize, coords_b.1 as isize);
-        if self.map_type == "octile" {
-            (x1 - x2).abs() <= 1 && (y1 - y2).abs() <= 1
-        } else {
-            (y2 == y1 && (x2 == x1 + 1 || x2 == x1 - 1))
-                || (x2 == x1 && (y2 == y1 + 1 || y2 == y1 - 1))
+        match self.map_type {
+            MapType::Octile => (x1 - x2).abs() <= 1 && (y1 - y2).abs() <= 1,
+            MapType::FourConnected => {
+                (y2 == y1 && (x2 == x1 + 1 || x2 == x1 - 1))
+                    || (x2 == x1 && (y2 == y1 + 1 || y2 == y1 - 1))
+            }
         }
     }
 }
@@ -268,22 +290,23 @@ impl Map2D<char> for MovingAiMap {
             return false;
         }
         let diagonal = from.0 != to.0 && from.1 != to.1;
-        let octile = self.map_type == "octile";
         let tile_char = *(self.get(to));
         let from_char = *(self.get(from));
-        if !octile || !diagonal {
-            match (tile_char, from_char) {
-                ('.', _) => true,
-                ('G', _) => true,
-                ('@', _) => false,
-                ('O', _) => false,
-                ('T', _) => false,
-                ('S', '.') => true,
-                ('S', 'S') => true,
-                ('W', 'W') => true,
-                _ => false,
+        match (self.map_type, diagonal) {
+            (MapType::FourConnected, _) | (MapType::Octile, false) => {
+                match (tile_char, from_char) {
+                    ('.', _) => true,
+                    ('G', _) => true,
+                    ('@', _) => false,
+                    ('O', _) => false,
+                    ('T', _) => false,
+                    ('S', '.') => true,
+                    ('S', 'S') => true,
+                    ('W', 'W') => true,
+                    _ => false,
+                }
             }
-        } else {
+            (MapType::Octile, true) => {
             // When connecting diagonals we need to check that the step is
             // not cutting corner.
             //
@@ -297,12 +320,13 @@ impl Map2D<char> for MovingAiMap {
             let (p, q) = to;
             let intermediate_a = (x, q);
             let intermediate_b = (p, y);
-            // A corner is not cut only if it is possible to reach the diagonal
-            // With a ANY double-step in a non-diagonal path.
-            self.is_traversable_from(from, intermediate_a)
-                && self.is_traversable_from(intermediate_a, to)
-                && self.is_traversable_from(from, intermediate_b)
-                && self.is_traversable_from(intermediate_b, to)
+                // A corner is not cut only if it is possible to reach the diagonal
+                // With a ANY double-step in a non-diagonal path.
+                self.is_traversable_from(from, intermediate_a)
+                    && self.is_traversable_from(intermediate_a, to)
+                    && self.is_traversable_from(from, intermediate_b)
+                    && self.is_traversable_from(intermediate_b, to)
+            }
         }
     }
 
