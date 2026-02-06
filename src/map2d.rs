@@ -320,19 +320,19 @@ impl Map2D<char> for MovingAiMap {
     }
 
     fn neighbors(&self, tile: Coords2D) -> Vec<Coords2D> {
-        let (x, y) = tile;
-        let all = vec![
-            (x + 1, y),
-            (x + 1, y + 1),
-            (x + 1, y - 1),
-            (x, y + 1),
-            (x, y - 1),
-            (x - 1, y),
-            (x - 1, y - 1),
-            (x - 1, y + 1),
+        const OFFSETS: [(isize, isize); 8] = [
+            (1, 0), (-1, 0), (0, 1), (0, -1),
+            (1, 1), (1, -1), (-1, 1), (-1, -1),
         ];
-        all.into_iter()
-            .filter(|x| self.is_traversable_from(tile, *x))
+        let (x, y) = tile;
+        OFFSETS
+            .iter()
+            .filter_map(|&(dx, dy)| {
+                let nx = x.checked_add_signed(dx)?;
+                let ny = y.checked_add_signed(dy)?;
+                Some((nx, ny))
+            })
+            .filter(|&neighbor| self.is_traversable_from(tile, neighbor))
             .collect()
     }
 }

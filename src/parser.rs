@@ -166,6 +166,12 @@ pub fn parse_scen(contents: &str) -> io::Result<Vec<SceneRecord>> {
             continue;
         }
         let record: Vec<&str> = line.split('\t').collect();
+        if record.len() < 9 {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!("Expected 9 fields in scene record, found {}", record.len()),
+            ));
+        }
         table.push(SceneRecord {
             bucket: record[0].parse::<u32>().map_err(|_| {
                 io::Error::new(io::ErrorKind::InvalidData, "Error parsing bucket size.")
