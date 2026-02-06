@@ -77,23 +77,23 @@ pub fn parse_map(contents: &str) -> io::Result<MovingAiMap> {
         if line.trim() == "map" {
             parse_map = true;
         } else {
-            let param: Vec<&str> = line.split_whitespace().collect();
-            if param.len() == 2 {
-                let key = param[0];
-                let value = param[1];
-                match key {
-                    "type" => map_type = value.to_string(),
-                    "height" => {
-                        height = value.parse::<usize>().map_err(|_| {
-                            io::Error::new(io::ErrorKind::InvalidData, "Error parsing map height.")
-                        })?
+            let mut parts = line.split_whitespace();
+            if let (Some(key), Some(value)) = (parts.next(), parts.next()) {
+                if parts.next().is_none() {
+                    match key {
+                        "type" => map_type = value.to_string(),
+                        "height" => {
+                            height = value.parse::<usize>().map_err(|_| {
+                                io::Error::new(io::ErrorKind::InvalidData, "Error parsing map height.")
+                            })?
+                        }
+                        "width" => {
+                            width = value.parse::<usize>().map_err(|_| {
+                                io::Error::new(io::ErrorKind::InvalidData, "Error parsing map width.")
+                            })?
+                        }
+                        _ => {}
                     }
-                    "width" => {
-                        width = value.parse::<usize>().map_err(|_| {
-                            io::Error::new(io::ErrorKind::InvalidData, "Error parsing map width.")
-                        })?
-                    }
-                    _ => {}
                 }
             }
         }
