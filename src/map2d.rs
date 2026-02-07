@@ -1,5 +1,7 @@
 use std::{fmt, ops::Index};
 
+use arrayvec::ArrayVec;
+
 /// Store coordinates in the (x,y) format.
 pub type Coords2D = (usize, usize);
 
@@ -119,7 +121,7 @@ pub trait Map2D<T> {
     fn free_states(&self) -> usize;
 
     /// Return the list of accessible neighbors of a tile.
-    fn neighbors(&self, tile: Coords2D) -> Vec<Coords2D>;
+    fn neighbors(&self, tile: Coords2D) -> ArrayVec<Coords2D, 8>;
 }
 
 #[derive(Debug)]
@@ -343,7 +345,7 @@ impl Map2D<char> for MovingAiMap {
         self.coords().filter(|c| self.is_traversable(*c)).count()
     }
 
-    fn neighbors(&self, tile: Coords2D) -> Vec<Coords2D> {
+    fn neighbors(&self, tile: Coords2D) -> ArrayVec<Coords2D, 8> {
         const OFFSETS: [(isize, isize); 8] = [
             (1, 0), (-1, 0), (0, 1), (0, -1),
             (1, 1), (1, -1), (-1, 1), (-1, -1),
