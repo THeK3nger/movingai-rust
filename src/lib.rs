@@ -22,4 +22,3 @@ mod map2d;
 
 /// Contains data structure for 2D MovingAI maps.
 pub use map2d::*;
-

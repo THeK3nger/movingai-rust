@@ -309,19 +309,19 @@ impl Map2D<char> for MovingAiMap {
                 }
             }
             (MapType::Octile, true) => {
-            // When connecting diagonals we need to check that the step is
-            // not cutting corner.
-            //
-            // xb.
-            // a..
-            // ...
-            //
-            // In the above example a cannot traverse from a to b because it
-            // would cut the corner `x`.
-            let (x, y) = from;
-            let (p, q) = to;
-            let intermediate_a = (x, q);
-            let intermediate_b = (p, y);
+                // When connecting diagonals we need to check that the step is
+                // not cutting corner.
+                //
+                // xb.
+                // a..
+                // ...
+                //
+                // In the above example a cannot traverse from a to b because it
+                // would cut the corner `x`.
+                let (x, y) = from;
+                let (p, q) = to;
+                let intermediate_a = (x, q);
+                let intermediate_b = (p, y);
                 // A corner is not cut only if it is possible to reach the diagonal
                 // With a ANY double-step in a non-diagonal path.
                 self.is_traversable_from(from, intermediate_a)
@@ -347,8 +347,14 @@ impl Map2D<char> for MovingAiMap {
 
     fn neighbors(&self, tile: Coords2D) -> ArrayVec<Coords2D, 8> {
         const OFFSETS: [(isize, isize); 8] = [
-            (1, 0), (-1, 0), (0, 1), (0, -1),
-            (1, 1), (1, -1), (-1, 1), (-1, -1),
+            (1, 0),
+            (-1, 0),
+            (0, 1),
+            (0, -1),
+            (1, 1),
+            (1, -1),
+            (-1, 1),
+            (-1, -1),
         ];
         let (x, y) = tile;
         OFFSETS

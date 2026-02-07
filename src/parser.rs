@@ -84,12 +84,18 @@ pub fn parse_map(contents: &str) -> io::Result<MovingAiMap> {
                         "type" => map_type = value.to_string(),
                         "height" => {
                             height = value.parse::<usize>().map_err(|_| {
-                                io::Error::new(io::ErrorKind::InvalidData, "Error parsing map height.")
+                                io::Error::new(
+                                    io::ErrorKind::InvalidData,
+                                    "Error parsing map height.",
+                                )
                             })?
                         }
                         "width" => {
                             width = value.parse::<usize>().map_err(|_| {
-                                io::Error::new(io::ErrorKind::InvalidData, "Error parsing map width.")
+                                io::Error::new(
+                                    io::ErrorKind::InvalidData,
+                                    "Error parsing map width.",
+                                )
                             })?
                         }
                         _ => {}
