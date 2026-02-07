@@ -1,4 +1,4 @@
-use std::{fmt, ops::Index};
+use std::{error::Error, fmt, ops::Index};
 
 use arrayvec::ArrayVec;
 
@@ -140,6 +140,8 @@ impl fmt::Display for ParseError {
         }
     }
 }
+
+impl Error for ParseError {}
 
 /// An immutable representation of a MovingAI map.
 #[derive(Debug)]
