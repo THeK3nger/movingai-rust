@@ -101,6 +101,10 @@ impl Octree3D {
     /// A vector of tuples containing (neighbor_coords, voxel_state) for each neighbor.
     /// Only neighbors within bounds are included.
     pub fn get_neighbors(&self, coords: Coords3D) -> Vec<(Coords3D, VoxelState)> {
+        if !self.is_within_bounds(coords) {
+            return Vec::new();
+        }
+
         let mut neighbors = Vec::with_capacity(26);
         let (x, y, z) = coords;
 
@@ -530,6 +534,15 @@ mod tests {
         // Test occupied neighbors
         let occupied_neighbors = octree.get_occupied_neighbors((1, 1, 1));
         assert_eq!(occupied_neighbors.len(), 2); // (2,1,1) and (1,2,1)
+    }
+
+    #[test]
+    fn test_neighbors_out_of_bounds_center() {
+        let octree = Octree3D::new(8, (0, 0, 0), VoxelState::Free);
+
+        assert!(octree.get_neighbors((-1, 0, 0)).is_empty());
+        assert!(octree.get_free_neighbors((0, -1, 0)).is_empty());
+        assert!(octree.get_occupied_neighbors((0, 0, 9)).is_empty());
     }
 
     #[test]
