@@ -401,52 +401,196 @@ impl Octree3D {
 
     /// Counts the number of occupied voxels in a given region.
     ///
+    /// Uses recursive tree traversal to skip entire subtrees when a node
+    /// is fully contained within the query region, avoiding per-voxel iteration.
+    ///
     /// # Arguments
-    /// * `min_coords` - The minimum coordinates of the region
-    /// * `max_coords` - The maximum coordinates of the region
+    /// * `min_coords` - The minimum coordinates of the region (inclusive)
+    /// * `max_coords` - The maximum coordinates of the region (inclusive)
     ///
     /// # Returns
     /// The number of occupied voxels in the region.
     pub fn count_occupied_in_region(&self, min_coords: Coords3D, max_coords: Coords3D) -> usize {
-        let mut count = 0;
-        let (min_x, min_y, min_z) = min_coords;
-        let (max_x, max_y, max_z) = max_coords;
+        let local_min = self.to_local_coords(min_coords);
+        let local_max = self.to_local_coords(max_coords);
+        Self::count_occupied_recursive(&self.root, local_min, local_max, 0, 0, 0, self.size)
+    }
 
-        for x in min_x..=max_x {
-            for y in min_y..=max_y {
-                for z in min_z..=max_z {
-                    if self.is_occupied((x, y, z)) {
-                        count += 1;
-                    }
+    /// Recursively counts occupied voxels in a region by leveraging the tree structure.
+    fn count_occupied_recursive(
+        node: &OctreeNode,
+        region_min: Coords3D,
+        region_max: Coords3D,
+        node_x: i32,
+        node_y: i32,
+        node_z: i32,
+        node_size: i32,
+    ) -> usize {
+        let node_max_x = node_x + node_size - 1;
+        let node_max_y = node_y + node_size - 1;
+        let node_max_z = node_z + node_size - 1;
+
+        // No overlap between node and region
+        if node_x > region_max.0
+            || node_max_x < region_min.0
+            || node_y > region_max.1
+            || node_max_y < region_min.1
+            || node_z > region_max.2
+            || node_max_z < region_min.2
+        {
+            return 0;
+        }
+
+        // Check if the node is fully contained within the region
+        let fully_contained = node_x >= region_min.0
+            && node_max_x <= region_max.0
+            && node_y >= region_min.1
+            && node_max_y <= region_max.1
+            && node_z >= region_min.2
+            && node_max_z <= region_max.2;
+
+        match node {
+            OctreeNode::Leaf { state } => {
+                if *state != VoxelState::Occupied {
+                    return 0;
+                }
+                if fully_contained {
+                    (node_size as usize).pow(3)
+                } else {
+                    // Partial overlap with a leaf — count the intersection
+                    let ox = (region_min.0.max(node_x), region_max.0.min(node_max_x));
+                    let oy = (region_min.1.max(node_y), region_max.1.min(node_max_y));
+                    let oz = (region_min.2.max(node_z), region_max.2.min(node_max_z));
+                    ((ox.1 - ox.0 + 1) * (oy.1 - oy.0 + 1) * (oz.1 - oz.0 + 1)) as usize
                 }
             }
+            OctreeNode::Internal { children } => {
+                let half_size = node_size / 2;
+                let mut count = 0;
+                for octant in 0..8 {
+                    let (child_x, child_y, child_z) =
+                        Self::get_child_origin(octant, node_x, node_y, node_z, half_size);
+                    count += Self::count_occupied_recursive(
+                        &children[octant],
+                        region_min,
+                        region_max,
+                        child_x,
+                        child_y,
+                        child_z,
+                        half_size,
+                    );
+                }
+                count
+            }
         }
-        count
     }
 
     /// Creates a box-shaped obstacle in the 3D space.
     ///
+    /// Uses recursive tree traversal to set entire subtrees at once when a node
+    /// is fully contained within the box, avoiding per-voxel tree traversals.
+    ///
     /// # Arguments
-    /// * `min_coords` - The minimum corner of the box
-    /// * `max_coords` - The maximum corner of the box
+    /// * `min_coords` - The minimum corner of the box (inclusive)
+    /// * `max_coords` - The maximum corner of the box (inclusive)
     ///
     /// # Returns
     /// The number of voxels set as occupied.
     pub fn create_box_obstacle(&mut self, min_coords: Coords3D, max_coords: Coords3D) -> usize {
-        let mut count = 0;
-        let (min_x, min_y, min_z) = min_coords;
-        let (max_x, max_y, max_z) = max_coords;
+        let local_min = self.to_local_coords(min_coords);
+        let local_max = self.to_local_coords(max_coords);
+        Self::set_region_recursive(
+            &mut self.root,
+            local_min,
+            local_max,
+            VoxelState::Occupied,
+            0,
+            0,
+            0,
+            self.size,
+        )
+    }
 
-        for x in min_x..=max_x {
-            for y in min_y..=max_y {
-                for z in min_z..=max_z {
-                    if self.set_voxel((x, y, z), VoxelState::Occupied) {
-                        count += 1;
-                    }
+    /// Recursively sets all voxels in a region to the given state.
+    fn set_region_recursive(
+        node: &mut OctreeNode,
+        region_min: Coords3D,
+        region_max: Coords3D,
+        state: VoxelState,
+        node_x: i32,
+        node_y: i32,
+        node_z: i32,
+        node_size: i32,
+    ) -> usize {
+        let node_max_x = node_x + node_size - 1;
+        let node_max_y = node_y + node_size - 1;
+        let node_max_z = node_z + node_size - 1;
+
+        // No overlap between node and region
+        if node_x > region_max.0
+            || node_max_x < region_min.0
+            || node_y > region_max.1
+            || node_max_y < region_min.1
+            || node_z > region_max.2
+            || node_max_z < region_min.2
+        {
+            return 0;
+        }
+
+        // Check if the node is fully contained within the region
+        let fully_contained = node_x >= region_min.0
+            && node_max_x <= region_max.0
+            && node_y >= region_min.1
+            && node_max_y <= region_max.1
+            && node_z >= region_min.2
+            && node_max_z <= region_max.2;
+
+        if fully_contained {
+            *node = OctreeNode::Leaf { state };
+            return (node_size as usize).pow(3);
+        }
+
+        // Partial overlap — need to split if this is a leaf
+        match node {
+            OctreeNode::Leaf {
+                state: current_state,
+            } => {
+                if *current_state == state {
+                    // Already the target state; count the intersection
+                    let ox = (region_min.0.max(node_x), region_max.0.min(node_max_x));
+                    let oy = (region_min.1.max(node_y), region_max.1.min(node_max_y));
+                    let oz = (region_min.2.max(node_z), region_max.2.min(node_max_z));
+                    return ((ox.1 - ox.0 + 1) * (oy.1 - oy.0 + 1) * (oz.1 - oz.0 + 1)) as usize;
                 }
+                // Split this leaf into children, then recurse
+                let children = Self::create_children(*current_state);
+                *node = OctreeNode::Internal { children };
+                Self::set_region_recursive(
+                    node, region_min, region_max, state, node_x, node_y, node_z, node_size,
+                )
+            }
+            OctreeNode::Internal { children } => {
+                let half_size = node_size / 2;
+                let mut count = 0;
+                for octant in 0..8 {
+                    let (child_x, child_y, child_z) =
+                        Self::get_child_origin(octant, node_x, node_y, node_z, half_size);
+                    count += Self::set_region_recursive(
+                        &mut children[octant],
+                        region_min,
+                        region_max,
+                        state,
+                        child_x,
+                        child_y,
+                        child_z,
+                        half_size,
+                    );
+                }
+                // Try to collapse if all children now share the same state
+                Self::try_collapse(node);
+                count
             }
         }
-        count
     }
 
     /// Creates a sphere-shaped obstacle in the 3D space.
