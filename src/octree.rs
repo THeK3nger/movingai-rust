@@ -135,14 +135,32 @@ impl Octree3D {
     /// # Returns
     /// A vector of coordinates for free neighboring voxels.
     pub fn get_free_neighbors(&self, coords: Coords3D) -> Vec<Coords3D> {
+        let (x, y, z) = coords;
         self.get_neighbors(coords)
             .into_iter()
-            .filter_map(|(coords, state)| {
-                if state == VoxelState::Free {
-                    Some(coords)
-                } else {
-                    None
+            .filter_map(|(neighbor, state)| {
+                if state != VoxelState::Free {
+                    return None;
                 }
+                let (nx, ny, nz) = neighbor;
+                let dx = nx - x;
+                let dy = ny - y;
+                let dz = nz - z;
+                // Diagonal moves are only allowed if each individual cardinal
+                // action is also possible (i.e. leads to a free voxel).
+                let diagonal = (dx != 0) as u8 + (dy != 0) as u8 + (dz != 0) as u8 > 1;
+                if diagonal {
+                    if dx != 0 && !self.is_free((x + dx, y, z)) {
+                        return None;
+                    }
+                    if dy != 0 && !self.is_free((x, y + dy, z)) {
+                        return None;
+                    }
+                    if dz != 0 && !self.is_free((x, y, z + dz)) {
+                        return None;
+                    }
+                }
+                Some(neighbor)
             })
             .collect()
     }
@@ -671,9 +689,9 @@ mod tests {
         let neighbors = octree.get_neighbors((1, 1, 1));
         assert_eq!(neighbors.len(), 26); // All neighbors should be within bounds
 
-        // Test free neighbors
+        // Test free neighbors: diagonals through (2,1,1) or (1,2,1) are blocked.
         let free_neighbors = octree.get_free_neighbors((1, 1, 1));
-        assert_eq!(free_neighbors.len(), 24); // 26 - 2 occupied neighbors
+        assert_eq!(free_neighbors.len(), 11);
 
         // Test occupied neighbors
         let occupied_neighbors = octree.get_occupied_neighbors((1, 1, 1));
