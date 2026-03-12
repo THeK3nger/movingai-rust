@@ -11,7 +11,6 @@
 //!
 //! Things.
 
-
 /// Contains all the parser functions.
 pub mod parser;
 

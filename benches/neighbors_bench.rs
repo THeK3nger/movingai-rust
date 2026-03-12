@@ -1,5 +1,5 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use movingai::{parser::parse_map_file, Map2D};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use movingai::{Map2D, parser::parse_map_file};
 use std::path::Path;
 
 fn neighbors_benchmark(c: &mut Criterion) {

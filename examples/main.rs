@@ -3,11 +3,11 @@ use std::collections::BinaryHeap;
 use std::path::Path;
 use std::time::Instant;
 
-use movingai::parser::parse_map_file;
-use movingai::parser::parse_scen_file;
 use movingai::Coords2D;
 use movingai::Map2D;
 use movingai::MovingAiMap;
+use movingai::parser::parse_map_file;
+use movingai::parser::parse_scen_file;
 
 // Let's define the search nodes.
 
