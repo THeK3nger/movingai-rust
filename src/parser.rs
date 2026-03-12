@@ -105,6 +105,19 @@ pub fn parse_map(contents: &str) -> io::Result<MovingAiMap> {
         }
     }
 
+    if height == 0 {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "Map height is missing or zero.",
+        ));
+    }
+    if width == 0 {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "Map width is missing or zero.",
+        ));
+    }
+
     MovingAiMap::new(map_type, height, width, map)
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
 }

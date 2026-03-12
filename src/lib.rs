@@ -11,9 +11,6 @@
 //!
 //! Things.
 
-#[cfg(feature = "serde")]
-#[macro_use]
-extern crate serde;
 
 /// Contains all the parser functions.
 pub mod parser;

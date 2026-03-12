@@ -1,5 +1,8 @@
 use std::{error::Error, fmt, ops::Index};
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 use arrayvec::ArrayVec;
 
 /// Store coordinates in the (x,y) format.
