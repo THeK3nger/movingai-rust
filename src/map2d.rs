@@ -79,11 +79,11 @@ pub trait Map2D<T> {
     /// #       56,
     /// #       Box::new(['.'; 54*56])
     /// #   ).unwrap();
-    /// assert!(mm.is_out_of_bound((76,3)));
-    /// assert!(!mm.is_out_of_bound((23,23)));
+    /// assert!(mm.is_out_of_bounds((76,3)));
+    /// assert!(!mm.is_out_of_bounds((23,23)));
     /// ```
     ///
-    fn is_out_of_bound(&self, coords: Coords2D) -> bool;
+    fn is_out_of_bounds(&self, coords: Coords2D) -> bool;
 
     /// Check if a tile in the map can be traversed.
     ///
@@ -280,12 +280,12 @@ impl Map2D<char> for MovingAiMap {
         &self.map[coords.1 * self.width() + coords.0]
     }
 
-    fn is_out_of_bound(&self, coords: Coords2D) -> bool {
+    fn is_out_of_bounds(&self, coords: Coords2D) -> bool {
         coords.0 >= self.width || coords.1 >= self.height
     }
 
     fn is_traversable(&self, tile: Coords2D) -> bool {
-        if self.is_out_of_bound(tile) {
+        if self.is_out_of_bounds(tile) {
             return false;
         }
         let tile_char = self.get(tile);
@@ -297,10 +297,10 @@ impl Map2D<char> for MovingAiMap {
     }
 
     fn is_traversable_from(&self, from: Coords2D, to: Coords2D) -> bool {
-        if self.is_out_of_bound(to) {
+        if self.is_out_of_bounds(to) {
             return false;
         }
-        if self.is_out_of_bound(from) {
+        if self.is_out_of_bounds(from) {
             return false;
         }
         if !self.coordinates_connect(to, from) {

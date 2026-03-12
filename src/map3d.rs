@@ -18,7 +18,7 @@ pub enum VoxelState {
 /// A read-only interface for 3D voxel maps.
 pub trait Map3D {
     /// Returns `true` if the coordinates are outside the map bounds.
-    fn is_out_of_bound(&self, coords: Coords3D) -> bool;
+    fn is_out_of_bounds(&self, coords: Coords3D) -> bool;
     /// Returns `true` if the voxel at `coords` is traversable (free).
     fn is_traversable(&self, coords: Coords3D) -> bool;
     /// Returns `true` if moving from `from` to `to` is a valid move.
@@ -123,7 +123,7 @@ impl VoxelMap {
 }
 
 impl Map3D for VoxelMap {
-    fn is_out_of_bound(&self, coords: Coords3D) -> bool {
+    fn is_out_of_bounds(&self, coords: Coords3D) -> bool {
         self.0.get_voxel(coords).is_none()
     }
 
