@@ -1,314 +1,334 @@
 #![allow(clippy::tabs_in_doc_comments)]
-use crate::map2d::MapType;
-use crate::map2d::MovingAiMap;
-use crate::map2d::SceneRecord;
+use crate::map2d::{MapType, MovingAiMap, SceneRecord};
 use crate::map3d::{SceneRecord3D, VoxelMap, VoxelState};
 use crate::octree::Octree3D;
 
-/// Contains all the parser functions.
+use std::error::Error;
+use std::fmt;
 use std::fs::File;
 use std::io;
-use std::io::prelude::*;
+use std::io::Read;
 use std::path;
 
+/// Errors returned by parser functions.
+#[derive(Debug)]
+pub enum ParseError {
+    /// I/O failure while reading from disk in `*_file` functions.
+    Io(io::Error),
+    /// Required field or section is missing.
+    MissingField(&'static str),
+    /// A field has an invalid value.
+    InvalidField {
+        /// Field name.
+        field: &'static str,
+        /// Original value.
+        value: String,
+    },
+    /// The record has too few fields.
+    InvalidFieldCount {
+        /// Record kind (e.g. "scene record").
+        kind: &'static str,
+        /// Expected minimum number of fields.
+        expected: usize,
+        /// Actual number of fields found.
+        found: usize,
+    },
+    /// Header line does not match the expected format.
+    InvalidHeader(&'static str),
+    /// Construction of the parsed map failed.
+    InvalidMap(crate::ParseError),
+    /// A voxel line points outside declared 3D map dimensions.
+    OutOfBoundsVoxel {
+        /// X coordinate.
+        x: i32,
+        /// Y coordinate.
+        y: i32,
+        /// Z coordinate.
+        z: i32,
+    },
+}
+
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ParseError::Io(e) => write!(f, "I/O error while reading file: {}", e),
+            ParseError::MissingField(field) => write!(f, "Missing required field: {}", field),
+            ParseError::InvalidField { field, value } => {
+                write!(f, "Invalid value for {}: {}", field, value)
+            }
+            ParseError::InvalidFieldCount {
+                kind,
+                expected,
+                found,
+            } => write!(
+                f,
+                "Expected at least {} fields in {}, found {}",
+                expected, kind, found
+            ),
+            ParseError::InvalidHeader(msg) => write!(f, "Invalid header: {}", msg),
+            ParseError::InvalidMap(e) => write!(f, "Invalid map: {}", e),
+            ParseError::OutOfBoundsVoxel { x, y, z } => {
+                write!(
+                    f,
+                    "Voxel coordinates out of declared 3D map bounds: ({}, {}, {})",
+                    x, y, z
+                )
+            }
+        }
+    }
+}
+
+impl Error for ParseError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            ParseError::Io(e) => Some(e),
+            ParseError::InvalidMap(e) => Some(e),
+            _ => None,
+        }
+    }
+}
+
+impl From<io::Error> for ParseError {
+    fn from(value: io::Error) -> Self {
+        ParseError::Io(value)
+    }
+}
+
+impl From<crate::ParseError> for ParseError {
+    fn from(value: crate::ParseError) -> Self {
+        ParseError::InvalidMap(value)
+    }
+}
+
 /// Parse a MovingAI `.map` file.
-///
-/// # Arguments
-///  * `path` represents the path to the file location.
-///
-/// # Returns
-///  It returns the parsed map as a `MovingAiMap` or an `Err`.
-///
-/// # Panics
-///  For the time, it panics if the map format it is not correct.
-///  TODO: Catch all these errors and encode them into `Result`.
-///
-/// # Errors
-///  Return errors if it is not possible to open the specified file.
-///
-/// # Examples
-///
-/// ```
-/// use std::path::Path;
-/// use movingai::parser::parse_map_file;
-///
-/// let map = parse_map_file(Path::new("./tests/arena.map")).unwrap();
-/// ```
-pub fn parse_map_file(path: &path::Path) -> io::Result<MovingAiMap> {
+pub fn parse_map_file(path: &path::Path) -> Result<MovingAiMap, ParseError> {
     let mut file = File::open(path)?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
-
     parse_map(&contents)
 }
 
 /// Parse a string representing a MovingAI `.map`.
-///
-/// # Arguments
-///  * `contents` a string in the `.map` format.
-///
-/// # Returns
-///  It returns the parsed map as a `MovingAiMap` or an `Err`.
-///
-/// # Panics
-///  For the time, it panics if the map format it is not correct.
-///  TODO: Catch all these errors and encode them into `Result`.
-///
-/// # Errors
-///  Return errors if it is not possible to open the specified file.
-///
-/// # Examples
-///
-/// ```
-/// use std::path::Path;
-/// use movingai::parser::parse_map;
-///
-/// let map = parse_map("type octile\nheight 1\nwidth 1\nmap\nT").unwrap();
-/// ```
-pub fn parse_map(contents: &str) -> io::Result<MovingAiMap> {
-    let mut height: usize = 0;
-    let mut width: usize = 0;
+pub fn parse_map(contents: &str) -> Result<MovingAiMap, ParseError> {
+    let mut height: Option<usize> = None;
+    let mut width: Option<usize> = None;
     let mut map_type: Option<MapType> = None;
     let mut map: Vec<char> = Vec::new();
 
-    let mut parse_map = false;
+    let mut parse_map_body = false;
     for line in contents.lines() {
-        if parse_map {
+        if parse_map_body {
             map.extend(line.chars());
             continue;
         }
         if line.trim() == "map" {
-            parse_map = true;
-        } else {
-            let mut parts = line.split_whitespace();
-            if let (Some(key), Some(value)) = (parts.next(), parts.next()) {
-                if parts.next().is_none() {
-                    match key {
-                        "type" => {
-                            map_type = Some(value.parse::<MapType>().map_err(|_| {
-                                io::Error::new(
-                                    io::ErrorKind::InvalidData,
-                                    format!("Unknown map type: {}", value),
-                                )
-                            })?)
-                        }
-                        "height" => {
-                            height = value.parse::<usize>().map_err(|_| {
-                                io::Error::new(
-                                    io::ErrorKind::InvalidData,
-                                    "Error parsing map height.",
-                                )
-                            })?
-                        }
-                        "width" => {
-                            width = value.parse::<usize>().map_err(|_| {
-                                io::Error::new(
-                                    io::ErrorKind::InvalidData,
-                                    "Error parsing map width.",
-                                )
-                            })?
-                        }
-                        _ => {}
+            parse_map_body = true;
+            continue;
+        }
+
+        let mut parts = line.split_whitespace();
+        if let (Some(key), Some(value)) = (parts.next(), parts.next()) {
+            if parts.next().is_none() {
+                match key {
+                    "type" => {
+                        map_type = Some(value.parse::<MapType>().map_err(|_| {
+                            ParseError::InvalidField {
+                                field: "map type",
+                                value: value.to_string(),
+                            }
+                        })?)
                     }
+                    "height" => {
+                        let parsed =
+                            value
+                                .parse::<usize>()
+                                .map_err(|_| ParseError::InvalidField {
+                                    field: "map height",
+                                    value: value.to_string(),
+                                })?;
+                        height = Some(parsed);
+                    }
+                    "width" => {
+                        let parsed =
+                            value
+                                .parse::<usize>()
+                                .map_err(|_| ParseError::InvalidField {
+                                    field: "map width",
+                                    value: value.to_string(),
+                                })?;
+                        width = Some(parsed);
+                    }
+                    _ => {}
                 }
             }
         }
     }
 
+    let height = height.ok_or(ParseError::MissingField("map height"))?;
     if height == 0 {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "Map height is missing or zero.",
-        ));
+        return Err(ParseError::InvalidField {
+            field: "map height",
+            value: "0".to_string(),
+        });
     }
+    let width = width.ok_or(ParseError::MissingField("map width"))?;
     if width == 0 {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "Map width is missing or zero.",
-        ));
+        return Err(ParseError::InvalidField {
+            field: "map width",
+            value: "0".to_string(),
+        });
     }
-    let map_type = map_type
-        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "Map type is missing."))?;
+    let map_type = map_type.ok_or(ParseError::MissingField("map type"))?;
 
-    MovingAiMap::new(map_type, height, width, map)
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
+    Ok(MovingAiMap::new(map_type, height, width, map)?)
 }
 
 /// Parse a MovingAI `.scen` file.
-///
-/// # Arguments
-///  * `path` represents the path to the file location.
-///
-/// # Returns
-///  It returns the parsed map as a `Vec<SceneRecord>` or an `Err`.
-///
-/// # Panics
-///  For the time, it panics if the map format it is not correct.
-///
-/// # Errors
-///  Return errors if it is not possible to open the specified file.
-///
-/// # Examples
-///
-/// ```
-/// use std::path::Path;
-/// use movingai::parser::parse_scen_file;
-///
-/// let scen = parse_scen_file(Path::new("./tests/arena2.map.scen")).unwrap();
-/// ```
-pub fn parse_scen_file(path: &path::Path) -> io::Result<Vec<SceneRecord>> {
+pub fn parse_scen_file(path: &path::Path) -> Result<Vec<SceneRecord>, ParseError> {
     let mut file = File::open(path)?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
-
     parse_scen(&contents)
 }
 
 /// Parse a string representing a MovingAI `.scen`.
-///
-/// # Arguments
-///  * `contents` the string representing the `.scen` file.
-///
-/// # Returns
-///  It returns the parsed map as a `Vec<SceneRecord>` or an `Err`.
-///
-/// # Panics
-///  For the time, it panics if the map format it is not correct.
-///
-/// # Errors
-///  Return errors if it is not possible to open the specified file.
-///
-/// # Examples
-///
-/// ```
-/// use std::path::Path;
-/// use movingai::parser::parse_scen;
-///
-/// let scen = parse_scen("version 1\n0	maps/dao/arena.map	49	49	1	11	1	12	1").unwrap();
-/// ```
-pub fn parse_scen(contents: &str) -> io::Result<Vec<SceneRecord>> {
+pub fn parse_scen(contents: &str) -> Result<Vec<SceneRecord>, ParseError> {
     let mut table: Vec<SceneRecord> = Vec::new();
 
     for line in contents.lines() {
-        if line.starts_with("version") {
+        if line.starts_with("version") || line.is_empty() {
             continue;
         }
-        if line.is_empty() {
-            continue;
-        }
+
         let record: Vec<&str> = line.split('\t').collect();
         if record.len() < 9 {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidData,
-                format!("Expected 9 fields in scene record, found {}", record.len()),
-            ));
+            return Err(ParseError::InvalidFieldCount {
+                kind: "scene record",
+                expected: 9,
+                found: record.len(),
+            });
         }
+
         table.push(SceneRecord {
-            bucket: record[0].parse::<u32>().map_err(|_| {
-                io::Error::new(io::ErrorKind::InvalidData, "Error parsing bucket size.")
-            })?,
+            bucket: record[0]
+                .parse::<u32>()
+                .map_err(|_| ParseError::InvalidField {
+                    field: "bucket size",
+                    value: record[0].to_string(),
+                })?,
             map_file: String::from(record[1]),
-            map_width: record[2].parse::<usize>().map_err(|_| {
-                io::Error::new(io::ErrorKind::InvalidData, "Error parsing map width.")
-            })?,
-            map_height: record[3].parse::<usize>().map_err(|_| {
-                io::Error::new(io::ErrorKind::InvalidData, "Error parsing map height.")
-            })?,
+            map_width: record[2]
+                .parse::<usize>()
+                .map_err(|_| ParseError::InvalidField {
+                    field: "map width",
+                    value: record[2].to_string(),
+                })?,
+            map_height: record[3]
+                .parse::<usize>()
+                .map_err(|_| ParseError::InvalidField {
+                    field: "map height",
+                    value: record[3].to_string(),
+                })?,
             start_pos: (
-                record[4].parse::<usize>().map_err(|_| {
-                    io::Error::new(io::ErrorKind::InvalidData, "Error parsing start x.")
-                })?,
-                record[5].parse::<usize>().map_err(|_| {
-                    io::Error::new(io::ErrorKind::InvalidData, "Error parsing start y.")
-                })?,
+                record[4]
+                    .parse::<usize>()
+                    .map_err(|_| ParseError::InvalidField {
+                        field: "start x",
+                        value: record[4].to_string(),
+                    })?,
+                record[5]
+                    .parse::<usize>()
+                    .map_err(|_| ParseError::InvalidField {
+                        field: "start y",
+                        value: record[5].to_string(),
+                    })?,
             ),
             goal_pos: (
-                record[6].parse::<usize>().map_err(|_| {
-                    io::Error::new(io::ErrorKind::InvalidData, "Error parsing goal x")
-                })?,
-                record[7].parse::<usize>().map_err(|_| {
-                    io::Error::new(io::ErrorKind::InvalidData, "Error parsing goal y")
-                })?,
+                record[6]
+                    .parse::<usize>()
+                    .map_err(|_| ParseError::InvalidField {
+                        field: "goal x",
+                        value: record[6].to_string(),
+                    })?,
+                record[7]
+                    .parse::<usize>()
+                    .map_err(|_| ParseError::InvalidField {
+                        field: "goal y",
+                        value: record[7].to_string(),
+                    })?,
             ),
-            optimal_length: record[8].parse::<f64>().map_err(|_| {
-                io::Error::new(io::ErrorKind::InvalidData, "Error parsing optimal length.")
-            })?,
-        })
+            optimal_length: record[8]
+                .parse::<f64>()
+                .map_err(|_| ParseError::InvalidField {
+                    field: "optimal length",
+                    value: record[8].to_string(),
+                })?,
+        });
     }
 
     Ok(table)
 }
 
 /// Parse a MovingAI `.3dmap` file into a [`VoxelMap`].
-///
-/// # Arguments
-///  * `path` represents the path to the file location.
-///
-/// # Returns
-///  It returns the parsed map as a `VoxelMap` or an `Err`.
-///
-/// # Errors
-///  Return errors if it is not possible to open or parse the file.
-///
-/// # Examples
-///
-/// ```
-/// use std::path::Path;
-/// use movingai::parser::parse_3dmap_file;
-///
-/// let map = parse_3dmap_file(Path::new("./tests/A1.3dmap")).unwrap();
-/// ```
-pub fn parse_3dmap_file(path: &path::Path) -> io::Result<VoxelMap> {
+pub fn parse_3dmap_file(path: &path::Path) -> Result<VoxelMap, ParseError> {
     let mut file = File::open(path)?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
-
     parse_3dmap(&contents)
 }
 
 /// Parse a string representing a MovingAI `.3dmap` into a [`VoxelMap`].
-///
-/// The format is a header line `voxel W H D` followed by one `x y z` line
-/// per occupied voxel. All unlisted voxels are considered free.
-///
-/// # Errors
-///  Return errors if the contents cannot be parsed.
-///
-/// # Examples
-///
-/// ```
-/// use movingai::parser::parse_3dmap;
-///
-/// let map = parse_3dmap("voxel 4 4 4\n1 1 1\n2 2 2").unwrap();
-/// ```
-pub fn parse_3dmap(contents: &str) -> io::Result<VoxelMap> {
+pub fn parse_3dmap(contents: &str) -> Result<VoxelMap, ParseError> {
     let mut lines = contents.lines();
 
     let header = lines
         .next()
-        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "3dmap file is empty."))?;
+        .ok_or(ParseError::InvalidHeader("3dmap file is empty"))?;
 
     let parts: Vec<&str> = header.split_whitespace().collect();
     if parts.len() != 4 || parts[0] != "voxel" {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "3dmap file has invalid header (expected \"voxel W H D\").",
+        return Err(ParseError::InvalidHeader(
+            "3dmap file must start with: voxel <width> <height> <depth>",
         ));
     }
 
-    let parse_usize = |s: &str, field: &str| {
-        s.parse::<i32>().map_err(|_| {
-            io::Error::new(
-                io::ErrorKind::InvalidData,
-                format!("Error parsing {}.", field),
-            )
-        })
-    };
-    let width = parse_usize(parts[1], "width")?;
-    let height = parse_usize(parts[2], "height")?;
-    let depth = parse_usize(parts[3], "depth")?;
+    let width = parts[1]
+        .parse::<i32>()
+        .map_err(|_| ParseError::InvalidField {
+            field: "width",
+            value: parts[1].to_string(),
+        })?;
+    let height = parts[2]
+        .parse::<i32>()
+        .map_err(|_| ParseError::InvalidField {
+            field: "height",
+            value: parts[2].to_string(),
+        })?;
+    let depth = parts[3]
+        .parse::<i32>()
+        .map_err(|_| ParseError::InvalidField {
+            field: "depth",
+            value: parts[3].to_string(),
+        })?;
+    if width <= 0 {
+        return Err(ParseError::InvalidField {
+            field: "width",
+            value: width.to_string(),
+        });
+    }
+    if height <= 0 {
+        return Err(ParseError::InvalidField {
+            field: "height",
+            value: height.to_string(),
+        });
+    }
+    if depth <= 0 {
+        return Err(ParseError::InvalidField {
+            field: "depth",
+            value: depth.to_string(),
+        });
+    }
 
-    // Octree size must be a power of 2 covering all three dimensions.
     let max_dim = width.max(height).max(depth);
     let mut size = 1;
     while size < max_dim {
@@ -323,28 +343,39 @@ pub fn parse_3dmap(contents: &str) -> io::Result<VoxelMap> {
         }
         let coords: Vec<&str> = line.split_whitespace().collect();
         if coords.len() < 3 {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidData,
-                format!(
-                    "Expected 3 coordinates per voxel line, found {}",
-                    coords.len()
-                ),
-            ));
+            return Err(ParseError::InvalidFieldCount {
+                kind: "3dmap voxel record",
+                expected: 3,
+                found: coords.len(),
+            });
         }
-        let x = parse_usize(coords[0], "x")?;
-        let y = parse_usize(coords[1], "y")?;
-        let z = parse_usize(coords[2], "z")?;
+
+        let x = coords[0]
+            .parse::<i32>()
+            .map_err(|_| ParseError::InvalidField {
+                field: "x",
+                value: coords[0].to_string(),
+            })?;
+        let y = coords[1]
+            .parse::<i32>()
+            .map_err(|_| ParseError::InvalidField {
+                field: "y",
+                value: coords[1].to_string(),
+            })?;
+        let z = coords[2]
+            .parse::<i32>()
+            .map_err(|_| ParseError::InvalidField {
+                field: "z",
+                value: coords[2].to_string(),
+            })?;
+
+        if x < 0 || y < 0 || z < 0 || x >= width || y >= height || z >= depth {
+            return Err(ParseError::OutOfBoundsVoxel { x, y, z });
+        }
+
         octree.set_voxel((x, y, z), VoxelState::Occupied);
     }
 
-    // The octree is a cube of side `size`, but the declared map dimensions
-    // are width × height × depth (each ≤ size). Mark the three out-of-bounds
-    // slabs as Occupied so pathfinders cannot route through "ghost" free space
-    // beyond the declared map boundary.
-    //
-    //   Slab 1: x ∈ [width,  size) × y ∈ [0,      size) × z ∈ [0,     size)
-    //   Slab 2: x ∈ [0,     width) × y ∈ [height, size) × z ∈ [0,     size)
-    //   Slab 3: x ∈ [0,     width) × y ∈ [0,    height) × z ∈ [depth, size)
     let s = size - 1;
     if width < size {
         octree.create_box_obstacle((width, 0, 0), (s, s, s));
@@ -360,74 +391,29 @@ pub fn parse_3dmap(contents: &str) -> io::Result<VoxelMap> {
 }
 
 /// Parse a MovingAI `.3dscen` file.
-///
-/// # Arguments
-///  * `path` represents the path to the file location.
-///
-/// # Returns
-///  It returns the parsed scenarios as a `Vec<SceneRecord3D>` or an `Err`.
-///
-/// # Errors
-///  Return errors if it is not possible to open the specified file.
-///
-/// # Examples
-///
-/// ```
-/// use std::path::Path;
-/// use movingai::parser::parse_3dscen_file;
-///
-/// let scen = parse_3dscen_file(Path::new("./tests/A1.3dmap.3dscen")).unwrap();
-/// ```
-pub fn parse_3dscen_file(path: &path::Path) -> io::Result<Vec<SceneRecord3D>> {
+pub fn parse_3dscen_file(path: &path::Path) -> Result<Vec<SceneRecord3D>, ParseError> {
     let mut file = File::open(path)?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
-
     parse_3dscen(&contents)
 }
 
 /// Parse a string representing a MovingAI `.3dscen`.
-///
-/// # Arguments
-///  * `contents` the string representing the `.3dscen` file.
-///
-/// # Returns
-///  It returns the parsed scenarios as a `Vec<SceneRecord3D>` or an `Err`.
-///
-/// # Errors
-///  Return errors if it is not possible to parse the contents.
-///
-/// # Examples
-///
-/// ```
-/// use movingai::parser::parse_3dscen;
-///
-/// let scen = parse_3dscen("version 1\nA1.3dmap\n101 109 191 577 273 142 562.04094761 1.005").unwrap();
-/// assert_eq!(scen.len(), 1);
-/// ```
-pub fn parse_3dscen(contents: &str) -> io::Result<Vec<SceneRecord3D>> {
+pub fn parse_3dscen(contents: &str) -> Result<Vec<SceneRecord3D>, ParseError> {
     let mut lines = contents.lines();
 
-    // First line must be the version header.
     let first = lines
         .next()
-        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "3dscen file is empty."))?;
+        .ok_or(ParseError::InvalidHeader("3dscen file is empty"))?;
     if !first.starts_with("version") {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "3dscen file missing version header.",
+        return Err(ParseError::InvalidHeader(
+            "3dscen file missing version header",
         ));
     }
 
-    // Second line is the map filename.
     let map_file = lines
         .next()
-        .ok_or_else(|| {
-            io::Error::new(
-                io::ErrorKind::InvalidData,
-                "3dscen file missing map filename.",
-            )
-        })?
+        .ok_or(ParseError::MissingField("3dscen map filename"))?
         .to_string();
 
     let mut table: Vec<SceneRecord3D> = Vec::new();
@@ -438,44 +424,67 @@ pub fn parse_3dscen(contents: &str) -> io::Result<Vec<SceneRecord3D>> {
         }
         let parts: Vec<&str> = line.split_whitespace().collect();
         if parts.len() < 8 {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidData,
-                format!(
-                    "Expected 8 fields in 3D scene record, found {}",
-                    parts.len()
-                ),
-            ));
+            return Err(ParseError::InvalidFieldCount {
+                kind: "3D scene record",
+                expected: 8,
+                found: parts.len(),
+            });
         }
-        let parse_i32 = |s: &str, field: &str| {
-            s.parse::<i32>().map_err(|_| {
-                io::Error::new(
-                    io::ErrorKind::InvalidData,
-                    format!("Error parsing {}.", field),
-                )
-            })
-        };
-        let parse_f64 = |s: &str, field: &str| {
-            s.parse::<f64>().map_err(|_| {
-                io::Error::new(
-                    io::ErrorKind::InvalidData,
-                    format!("Error parsing {}.", field),
-                )
-            })
-        };
+
         table.push(SceneRecord3D {
             map_file: map_file.clone(),
             start_pos: (
-                parse_i32(parts[0], "start x")?,
-                parse_i32(parts[1], "start y")?,
-                parse_i32(parts[2], "start z")?,
+                parts[0]
+                    .parse::<i32>()
+                    .map_err(|_| ParseError::InvalidField {
+                        field: "start x",
+                        value: parts[0].to_string(),
+                    })?,
+                parts[1]
+                    .parse::<i32>()
+                    .map_err(|_| ParseError::InvalidField {
+                        field: "start y",
+                        value: parts[1].to_string(),
+                    })?,
+                parts[2]
+                    .parse::<i32>()
+                    .map_err(|_| ParseError::InvalidField {
+                        field: "start z",
+                        value: parts[2].to_string(),
+                    })?,
             ),
             goal_pos: (
-                parse_i32(parts[3], "goal x")?,
-                parse_i32(parts[4], "goal y")?,
-                parse_i32(parts[5], "goal z")?,
+                parts[3]
+                    .parse::<i32>()
+                    .map_err(|_| ParseError::InvalidField {
+                        field: "goal x",
+                        value: parts[3].to_string(),
+                    })?,
+                parts[4]
+                    .parse::<i32>()
+                    .map_err(|_| ParseError::InvalidField {
+                        field: "goal y",
+                        value: parts[4].to_string(),
+                    })?,
+                parts[5]
+                    .parse::<i32>()
+                    .map_err(|_| ParseError::InvalidField {
+                        field: "goal z",
+                        value: parts[5].to_string(),
+                    })?,
             ),
-            optimal_length: parse_f64(parts[6], "optimal length")?,
-            heuristic_ratio: parse_f64(parts[7], "heuristic ratio")?,
+            optimal_length: parts[6]
+                .parse::<f64>()
+                .map_err(|_| ParseError::InvalidField {
+                    field: "optimal length",
+                    value: parts[6].to_string(),
+                })?,
+            heuristic_ratio: parts[7]
+                .parse::<f64>()
+                .map_err(|_| ParseError::InvalidField {
+                    field: "heuristic ratio",
+                    value: parts[7].to_string(),
+                })?,
         });
     }
 
