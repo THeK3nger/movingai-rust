@@ -151,7 +151,7 @@ fn parsing_3dmap_no_voxels_lost() {
             .collect();
         assert_eq!(
             octree.get_voxel((coords[0], coords[1], coords[2])),
-            Some(movingai::octree::VoxelState::Occupied),
+            Some(movingai::VoxelState::Occupied),
             "voxel ({},{},{}) was listed as occupied but reads as free",
             coords[0],
             coords[1],

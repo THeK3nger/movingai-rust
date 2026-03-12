@@ -1,10 +1,10 @@
-use movingai::octree::{Octree3D, VoxelState};
+use movingai::{VoxelMap, VoxelState};
 
 fn main() {
     println!("=== Octree 3D Map Utility Demo ===\n");
 
     // Create a larger 3D map for demonstration
-    let mut map = Octree3D::new(16, (0, 0, 0), VoxelState::Free);
+    let mut map = VoxelMap::new(16, (0, 0, 0), VoxelState::Free);
 
     println!(
         "Created {}x{}x{} 3D map",

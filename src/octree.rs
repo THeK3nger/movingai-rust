@@ -1,14 +1,4 @@
-/// Store coordinates in the (x,y,z) format.
-pub type Coords3D = (i32, i32, i32);
-
-/// Represents the state of a voxel in the 3D space.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum VoxelState {
-    /// The voxel is free and can be traversed.
-    Free,
-    /// The voxel is occupied and cannot be traversed.
-    Occupied,
-}
+use crate::map3d::{Coords3D, VoxelState};
 
 /// A node in the octree structure.
 #[derive(Debug, Clone)]

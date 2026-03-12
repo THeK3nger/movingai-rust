@@ -1,8 +1,8 @@
-use movingai::octree::{Octree3D, VoxelState};
+use movingai::{VoxelMap, VoxelState};
 
 fn main() {
     // Create a simple 8x8x8 3D map
-    let mut map = Octree3D::new(8, (0, 0, 0), VoxelState::Free);
+    let mut map = VoxelMap::new(8, (0, 0, 0), VoxelState::Free);
 
     // Create a simple obstacle
     map.set_voxel((3, 3, 3), VoxelState::Occupied);

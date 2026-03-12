@@ -1,5 +1,5 @@
-use movingai::octree::{Coords3D, Octree3D, VoxelState};
 use movingai::parser::{parse_3dmap_file, parse_3dscen_file};
+use movingai::{Coords3D, Map3D, VoxelMap, VoxelState};
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap};
 use std::path::Path;
@@ -45,7 +45,7 @@ fn move_cost(a: Coords3D, b: Coords3D) -> f64 {
     (dx * dx + dy * dy + dz * dz).sqrt()
 }
 
-fn astar(octree: &Octree3D, start: Coords3D, goal: Coords3D) -> Option<f64> {
+fn astar(octree: &VoxelMap, start: Coords3D, goal: Coords3D) -> Option<f64> {
     if !matches!(octree.get_voxel(start), Some(VoxelState::Free)) {
         return None;
     }
@@ -70,7 +70,7 @@ fn astar(octree: &Octree3D, start: Coords3D, goal: Coords3D) -> Option<f64> {
         if g > *g_score.get(&coords).unwrap_or(&f64::INFINITY) {
             continue;
         }
-        for neighbor in octree.get_free_neighbors(coords) {
+        for neighbor in octree.neighbors(coords) {
             let new_g = g + move_cost(coords, neighbor);
             if new_g < *g_score.get(&neighbor).unwrap_or(&f64::INFINITY) {
                 g_score.insert(neighbor, new_g);

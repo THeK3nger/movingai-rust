@@ -1,8 +1,8 @@
 #![allow(clippy::tabs_in_doc_comments)]
 use crate::map2d::MovingAiMap;
 use crate::map2d::SceneRecord;
-use crate::map3d::SceneRecord3D;
-use crate::octree::{Octree3D, VoxelState};
+use crate::map3d::{SceneRecord3D, VoxelMap, VoxelState};
+use crate::octree::Octree3D;
 
 /// Contains all the parser functions.
 use std::fs::File;
@@ -229,13 +229,13 @@ pub fn parse_scen(contents: &str) -> io::Result<Vec<SceneRecord>> {
     Ok(table)
 }
 
-/// Parse a MovingAI `.3dmap` file into an `Octree3D`.
+/// Parse a MovingAI `.3dmap` file into a [`VoxelMap`].
 ///
 /// # Arguments
 ///  * `path` represents the path to the file location.
 ///
 /// # Returns
-///  It returns the parsed map as an `Octree3D` or an `Err`.
+///  It returns the parsed map as a `VoxelMap` or an `Err`.
 ///
 /// # Errors
 ///  Return errors if it is not possible to open or parse the file.
@@ -248,7 +248,7 @@ pub fn parse_scen(contents: &str) -> io::Result<Vec<SceneRecord>> {
 ///
 /// let map = parse_3dmap_file(Path::new("./tests/A1.3dmap")).unwrap();
 /// ```
-pub fn parse_3dmap_file(path: &path::Path) -> io::Result<Octree3D> {
+pub fn parse_3dmap_file(path: &path::Path) -> io::Result<VoxelMap> {
     let mut file = File::open(path)?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
@@ -256,7 +256,7 @@ pub fn parse_3dmap_file(path: &path::Path) -> io::Result<Octree3D> {
     parse_3dmap(&contents)
 }
 
-/// Parse a string representing a MovingAI `.3dmap` into an `Octree3D`.
+/// Parse a string representing a MovingAI `.3dmap` into a [`VoxelMap`].
 ///
 /// The format is a header line `voxel W H D` followed by one `x y z` line
 /// per occupied voxel. All unlisted voxels are considered free.
@@ -271,7 +271,7 @@ pub fn parse_3dmap_file(path: &path::Path) -> io::Result<Octree3D> {
 ///
 /// let map = parse_3dmap("voxel 4 4 4\n1 1 1\n2 2 2").unwrap();
 /// ```
-pub fn parse_3dmap(contents: &str) -> io::Result<Octree3D> {
+pub fn parse_3dmap(contents: &str) -> io::Result<VoxelMap> {
     let mut lines = contents.lines();
 
     let header = lines
@@ -346,7 +346,7 @@ pub fn parse_3dmap(contents: &str) -> io::Result<Octree3D> {
         octree.create_box_obstacle((0, 0, depth), (width - 1, height - 1, s));
     }
 
-    Ok(octree)
+    Ok(VoxelMap(octree))
 }
 
 /// Parse a MovingAI `.3dscen` file.
