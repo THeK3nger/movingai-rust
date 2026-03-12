@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-03-12
+
+### Added
+
+- Validation for missing/empty height and width: The parser now returns an error when these required header fields are absent or empty.
+
+### Improvements
+
+- Stack-allocated neighbors (ArrayVec): Replaced `Vec<Coords2D>` with a stack-allocated `ArrayVec` in the `neighbors()` function. This eliminates a heap allocation at every cell expansion, resulting in a 38% improvement in map traversal speed.
+- Enum for `map_type`: Replaced String comparisons with an enum for the `map_type` field, avoiding heap allocations in inner loops.
+- Avoid `collect()` in header parsing and refactored `parse_map` header parsing to skip unnecessary intermediate collection, saving memory during map loading.
+
+### Bug Fixes
+
+- Fixed a potential panic when subtracting unsigned indices, along with additional edge-case tests.
+
 ## [2.1.0] - 2025-03-12
 
 ### Breaking Changes
