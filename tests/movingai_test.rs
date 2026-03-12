@@ -1,5 +1,9 @@
 use std::path::Path;
 
+use movingai::Map2D;
+use movingai::MovingAiMap;
+use movingai::parser::parse_3dscen;
+use movingai::parser::parse_3dscen_file;
 use movingai::parser::parse_map_file;
 use movingai::parser::parse_scen;
 use movingai::parser::parse_scen_file;
@@ -111,4 +115,21 @@ fn parse_scen_empty_line_is_skipped() {
     let result = parse_scen(input);
     assert!(result.is_ok());
     assert_eq!(result.unwrap().len(), 1);
+}
+
+#[test]
+fn parsing_3dscen_file() {
+    let scen = parse_3dscen_file(Path::new("./tests/A1.3dmap.3dscen")).unwrap();
+    assert_eq!(scen[0].map_file, "A1.3dmap");
+    assert_eq!(scen[0].start_pos, (101, 109, 191));
+    assert_eq!(scen[0].goal_pos, (577, 273, 142));
+    assert!((scen[0].optimal_length - 562.04094761).abs() < 1e-6);
+    assert!((scen[0].heuristic_ratio - 1.005).abs() < 1e-6);
+}
+
+#[test]
+fn parse_3dscen_malformed_line_returns_error() {
+    let malformed = "version 1\nA1.3dmap\n101 109";
+    let result = parse_3dscen(malformed);
+    assert!(result.is_err());
 }

@@ -16,9 +16,13 @@
 pub mod parser;
 
 mod map2d;
+mod map3d;
 
 /// Contains data structure for 2D MovingAI maps.
 pub use map2d::*;
+
+/// Contains data structures for 3D MovingAI maps.
+pub use map3d::*;
 
 /// Contains data structures for efficient 3D map storage using octrees.
 ///

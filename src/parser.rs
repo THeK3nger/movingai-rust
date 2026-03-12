@@ -1,6 +1,7 @@
 #![allow(clippy::tabs_in_doc_comments)]
 use crate::map2d::MovingAiMap;
 use crate::map2d::SceneRecord;
+use crate::map3d::SceneRecord3D;
 
 /// Contains all the parser functions.
 use std::fs::File;
@@ -222,6 +223,129 @@ pub fn parse_scen(contents: &str) -> io::Result<Vec<SceneRecord>> {
                 io::Error::new(io::ErrorKind::InvalidData, "Error parsing optimal length.")
             })?,
         })
+    }
+
+    Ok(table)
+}
+
+/// Parse a MovingAI `.3dscen` file.
+///
+/// # Arguments
+///  * `path` represents the path to the file location.
+///
+/// # Returns
+///  It returns the parsed scenarios as a `Vec<SceneRecord3D>` or an `Err`.
+///
+/// # Errors
+///  Return errors if it is not possible to open the specified file.
+///
+/// # Examples
+///
+/// ```
+/// use std::path::Path;
+/// use movingai::parser::parse_3dscen_file;
+///
+/// let scen = parse_3dscen_file(Path::new("./tests/A1.3dmap.3dscen")).unwrap();
+/// ```
+pub fn parse_3dscen_file(path: &path::Path) -> io::Result<Vec<SceneRecord3D>> {
+    let mut file = File::open(path)?;
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)?;
+
+    parse_3dscen(&contents)
+}
+
+/// Parse a string representing a MovingAI `.3dscen`.
+///
+/// # Arguments
+///  * `contents` the string representing the `.3dscen` file.
+///
+/// # Returns
+///  It returns the parsed scenarios as a `Vec<SceneRecord3D>` or an `Err`.
+///
+/// # Errors
+///  Return errors if it is not possible to parse the contents.
+///
+/// # Examples
+///
+/// ```
+/// use movingai::parser::parse_3dscen;
+///
+/// let scen = parse_3dscen("version 1\nA1.3dmap\n101 109 191 577 273 142 562.04094761 1.005").unwrap();
+/// assert_eq!(scen.len(), 1);
+/// ```
+pub fn parse_3dscen(contents: &str) -> io::Result<Vec<SceneRecord3D>> {
+    let mut lines = contents.lines();
+
+    // First line must be the version header.
+    let first = lines
+        .next()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "3dscen file is empty."))?;
+    if !first.starts_with("version") {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "3dscen file missing version header.",
+        ));
+    }
+
+    // Second line is the map filename.
+    let map_file = lines
+        .next()
+        .ok_or_else(|| {
+            io::Error::new(
+                io::ErrorKind::InvalidData,
+                "3dscen file missing map filename.",
+            )
+        })?
+        .to_string();
+
+    let mut table: Vec<SceneRecord3D> = Vec::new();
+
+    for line in lines {
+        if line.is_empty() {
+            continue;
+        }
+        let parts: Vec<&str> = line.split_whitespace().collect();
+        if parts.len() < 8 {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!(
+                    "Expected 8 fields in 3D scene record, found {}",
+                    parts.len()
+                ),
+            ));
+        }
+        let parse_i32 = |s: &str, field: &str| {
+            s.parse::<i32>().map_err(|_| {
+                io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("Error parsing {}.", field),
+                )
+            })
+        };
+        let parse_f64 = |s: &str, field: &str| {
+            s.parse::<f64>().map_err(|_| {
+                io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("Error parsing {}.", field),
+                )
+            })
+        };
+        table.push(SceneRecord3D {
+            map_file: map_file.clone(),
+            start_pos: (
+                parse_i32(parts[0], "start x")?,
+                parse_i32(parts[1], "start y")?,
+                parse_i32(parts[2], "start z")?,
+            ),
+            goal_pos: (
+                parse_i32(parts[3], "goal x")?,
+                parse_i32(parts[4], "goal y")?,
+                parse_i32(parts[5], "goal z")?,
+            ),
+            optimal_length: parse_f64(parts[6], "optimal length")?,
+            heuristic_ratio: parse_f64(parts[7], "heuristic ratio")?,
+        });
     }
 
     Ok(table)
