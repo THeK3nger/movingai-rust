@@ -1,6 +1,7 @@
 use std::path::Path;
 
 use movingai::Map2D;
+use movingai::MapType;
 use movingai::MovingAiMap;
 use movingai::parser::parse_3dmap_file;
 use movingai::parser::parse_3dscen;
@@ -11,7 +12,7 @@ use movingai::parser::parse_scen_file;
 
 #[test]
 fn indexing() {
-    let test = MovingAiMap::new(String::from("test"), 4, 6, vec!['.'; 4 * 6]).unwrap();
+    let test = MovingAiMap::new(MapType::Octile, 4, 6, vec!['.'; 4 * 6]).unwrap();
     assert_eq!(test[(0, 3)], '.');
     assert_eq!(test[(3, 0)], '.');
 }
@@ -72,7 +73,7 @@ fn neighbours() {
 #[test]
 fn neighbors_at_origin_does_not_panic() {
     let map = MovingAiMap::new(
-        String::from("octile"),
+        MapType::Octile,
         3,
         3,
         vec!['.', '.', '.', '.', '.', '.', '.', '.', '.'],
@@ -88,7 +89,7 @@ fn neighbors_at_origin_does_not_panic() {
 #[test]
 fn neighbors_at_bottom_right_does_not_panic() {
     let map = MovingAiMap::new(
-        String::from("octile"),
+        MapType::Octile,
         3,
         3,
         vec!['.', '.', '.', '.', '.', '.', '.', '.', '.'],
@@ -105,6 +106,13 @@ fn neighbors_at_bottom_right_does_not_panic() {
 fn parse_scen_malformed_line_returns_error() {
     let malformed = "version 1\n0\tmaps/dao/arena.map\t49";
     let result = parse_scen(malformed);
+    assert!(result.is_err());
+}
+
+#[test]
+fn parse_map_unknown_type_returns_error() {
+    let malformed = "type not-a-real-type\nheight 1\nwidth 1\nmap\n.";
+    let result = movingai::parser::parse_map(malformed);
     assert!(result.is_err());
 }
 

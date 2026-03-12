@@ -1,4 +1,5 @@
 #![allow(clippy::tabs_in_doc_comments)]
+use crate::map2d::MapType;
 use crate::map2d::MovingAiMap;
 use crate::map2d::SceneRecord;
 use crate::map3d::{SceneRecord3D, VoxelMap, VoxelState};
@@ -67,7 +68,7 @@ pub fn parse_map_file(path: &path::Path) -> io::Result<MovingAiMap> {
 pub fn parse_map(contents: &str) -> io::Result<MovingAiMap> {
     let mut height: usize = 0;
     let mut width: usize = 0;
-    let mut map_type = String::from("empty");
+    let mut map_type: Option<MapType> = None;
     let mut map: Vec<char> = Vec::new();
 
     let mut parse_map = false;
@@ -83,7 +84,14 @@ pub fn parse_map(contents: &str) -> io::Result<MovingAiMap> {
             if let (Some(key), Some(value)) = (parts.next(), parts.next()) {
                 if parts.next().is_none() {
                     match key {
-                        "type" => map_type = value.to_string(),
+                        "type" => {
+                            map_type = Some(value.parse::<MapType>().map_err(|_| {
+                                io::Error::new(
+                                    io::ErrorKind::InvalidData,
+                                    format!("Unknown map type: {}", value),
+                                )
+                            })?)
+                        }
                         "height" => {
                             height = value.parse::<usize>().map_err(|_| {
                                 io::Error::new(
@@ -119,6 +127,8 @@ pub fn parse_map(contents: &str) -> io::Result<MovingAiMap> {
             "Map width is missing or zero.",
         ));
     }
+    let map_type = map_type
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "Map type is missing."))?;
 
     MovingAiMap::new(map_type, height, width, map)
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))

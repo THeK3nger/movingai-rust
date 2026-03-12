@@ -8,23 +8,26 @@ use arrayvec::ArrayVec;
 /// Store coordinates in the (x,y) format.
 pub type Coords2D = (usize, usize);
 
-/// Internal enum representing the type of map connectivity.
+/// Connectivity model used by the map.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-enum MapType {
+pub enum MapType {
     /// 8-connected grid (diagonal movement allowed)
     Octile,
     /// 4-connected grid (only cardinal directions)
     FourConnected,
 }
 
-impl MapType {
-    /// Parse a map type string into the enum.
-    /// Defaults to FourConnected for unknown types.
-    fn from_string(s: &str) -> Self {
-        match s.to_lowercase().as_str() {
-            "octile" => MapType::Octile,
-            _ => MapType::FourConnected,
+impl std::str::FromStr for MapType {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.eq_ignore_ascii_case("octile") {
+            Ok(MapType::Octile)
+        } else if s.eq_ignore_ascii_case("4-connected") {
+            Ok(MapType::FourConnected)
+        } else {
+            Err(())
         }
     }
 }
@@ -47,10 +50,11 @@ pub trait Map2D<T> {
     ///
     /// ```rust
     /// use movingai::Map2D;
+    /// use movingai::MapType;
     /// use movingai::MovingAiMap;
     ///
     /// let mm = MovingAiMap::new_from_slice(
-    ///        String::from("test"),
+    ///        MapType::Octile,
     ///        54,
     ///        56,
     ///        Box::new(['.'; 54*56])
@@ -66,10 +70,11 @@ pub trait Map2D<T> {
     ///
     /// ```
     /// # use movingai::Map2D;
+    /// # use movingai::MapType;
     /// # use movingai::MovingAiMap;
     /// #
     /// # let mm = MovingAiMap::new_from_slice(
-    /// #       String::from("test"),
+    /// #       MapType::Octile,
     /// #       54,
     /// #       56,
     /// #       Box::new(['.'; 54*56])
@@ -160,7 +165,7 @@ impl MovingAiMap {
     /// Create a new `MovingAIMap` object from basic components.
     ///
     /// # Arguments
-    ///  * `map_type`: The type of map you are registering. Usually `octile`.
+    ///  * `map_type`: The map connectivity type.
     ///  * `height`: the height of the map.
     ///  * `width`: the width of the map.
     ///  * `map`: A vector representing the map in row-major order.
@@ -169,7 +174,7 @@ impl MovingAiMap {
     ///
     /// Returns an error if the size of the map vector is different from `height * width`.
     pub fn new(
-        map_type: String,
+        map_type: MapType,
         height: usize,
         width: usize,
         map: Vec<char>,
@@ -183,7 +188,7 @@ impl MovingAiMap {
     /// Create a new `MovingAIMap` object from basic components.
     ///
     /// # Arguments
-    ///  * `map_type`: The type of map you are registering. Usually `octile`.
+    ///  * `map_type`: The map connectivity type.
     ///  * `height`: the height of the map.
     ///  * `width`: the width of the map.
     ///  * `map`: A boxed slice representing the map in row-major order.
@@ -192,7 +197,7 @@ impl MovingAiMap {
     ///
     /// Returns an error if the size of the map vector is different from `height * width`.
     pub fn new_from_slice(
-        map_type: String,
+        map_type: MapType,
         height: usize,
         width: usize,
         map: Box<[char]>,
@@ -201,11 +206,16 @@ impl MovingAiMap {
             return Err(ParseError::InvalidMapSize);
         }
         Ok(MovingAiMap {
-            map_type: MapType::from_string(&map_type),
+            map_type,
             height,
             width,
             map,
         })
+    }
+
+    /// Return the connectivity mode used by this map.
+    pub fn map_type(&self) -> MapType {
+        self.map_type
     }
 
     fn coordinates_connect(&self, coords_a: Coords2D, coords_b: Coords2D) -> bool {
