@@ -2,6 +2,7 @@
 use crate::map2d::MovingAiMap;
 use crate::map2d::SceneRecord;
 use crate::map3d::SceneRecord3D;
+use crate::octree::{Octree3D, VoxelState};
 
 /// Contains all the parser functions.
 use std::fs::File;
@@ -226,6 +227,107 @@ pub fn parse_scen(contents: &str) -> io::Result<Vec<SceneRecord>> {
     }
 
     Ok(table)
+}
+
+/// Parse a MovingAI `.3dmap` file into an `Octree3D`.
+///
+/// # Arguments
+///  * `path` represents the path to the file location.
+///
+/// # Returns
+///  It returns the parsed map as an `Octree3D` or an `Err`.
+///
+/// # Errors
+///  Return errors if it is not possible to open or parse the file.
+///
+/// # Examples
+///
+/// ```
+/// use std::path::Path;
+/// use movingai::parser::parse_3dmap_file;
+///
+/// let map = parse_3dmap_file(Path::new("./tests/A1.3dmap")).unwrap();
+/// ```
+pub fn parse_3dmap_file(path: &path::Path) -> io::Result<Octree3D> {
+    let mut file = File::open(path)?;
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)?;
+
+    parse_3dmap(&contents)
+}
+
+/// Parse a string representing a MovingAI `.3dmap` into an `Octree3D`.
+///
+/// The format is a header line `voxel W H D` followed by one `x y z` line
+/// per occupied voxel. All unlisted voxels are considered free.
+///
+/// # Errors
+///  Return errors if the contents cannot be parsed.
+///
+/// # Examples
+///
+/// ```
+/// use movingai::parser::parse_3dmap;
+///
+/// let map = parse_3dmap("voxel 4 4 4\n1 1 1\n2 2 2").unwrap();
+/// ```
+pub fn parse_3dmap(contents: &str) -> io::Result<Octree3D> {
+    let mut lines = contents.lines();
+
+    let header = lines
+        .next()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "3dmap file is empty."))?;
+
+    let parts: Vec<&str> = header.split_whitespace().collect();
+    if parts.len() != 4 || parts[0] != "voxel" {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "3dmap file has invalid header (expected \"voxel W H D\").",
+        ));
+    }
+
+    let parse_usize = |s: &str, field: &str| {
+        s.parse::<i32>().map_err(|_| {
+            io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!("Error parsing {}.", field),
+            )
+        })
+    };
+    let width = parse_usize(parts[1], "width")?;
+    let height = parse_usize(parts[2], "height")?;
+    let depth = parse_usize(parts[3], "depth")?;
+
+    // Octree size must be a power of 2 covering all three dimensions.
+    let max_dim = width.max(height).max(depth);
+    let mut size = 1;
+    while size < max_dim {
+        size <<= 1;
+    }
+
+    let mut octree = Octree3D::new(size, (0, 0, 0), VoxelState::Free);
+
+    for line in lines {
+        if line.is_empty() {
+            continue;
+        }
+        let coords: Vec<&str> = line.split_whitespace().collect();
+        if coords.len() < 3 {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!(
+                    "Expected 3 coordinates per voxel line, found {}",
+                    coords.len()
+                ),
+            ));
+        }
+        let x = parse_usize(coords[0], "x")?;
+        let y = parse_usize(coords[1], "y")?;
+        let z = parse_usize(coords[2], "z")?;
+        octree.set_voxel((x, y, z), VoxelState::Occupied);
+    }
+
+    Ok(octree)
 }
 
 /// Parse a MovingAI `.3dscen` file.

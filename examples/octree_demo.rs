@@ -1,60 +1,126 @@
-use movingai::octree::{Octree3D, VoxelState};
+use movingai::octree::{Coords3D, Octree3D, VoxelState};
+use movingai::parser::{parse_3dmap_file, parse_3dscen_file};
+use std::cmp::Ordering;
+use std::collections::{BinaryHeap, HashMap};
+use std::path::Path;
 
-fn main() {
-    // Create a new octree with size 16x16x16, starting at origin
-    let mut octree = Octree3D::new(16, (0, 0, 0), VoxelState::Free);
+// -- A* -----------------------------------------------------------------------
 
-    // Set some voxels as occupied to create obstacles
-    octree.set_voxel((5, 5, 5), VoxelState::Occupied);
-    octree.set_voxel((6, 5, 5), VoxelState::Occupied);
-    octree.set_voxel((5, 6, 5), VoxelState::Occupied);
-    octree.set_voxel((7, 8, 9), VoxelState::Occupied);
+#[derive(Clone, PartialEq)]
+struct State {
+    f: f64,
+    g: f64,
+    coords: Coords3D,
+}
 
-    // Query a specific voxel
-    let center = (5, 5, 5);
-    match octree.get_voxel(center) {
-        Some(VoxelState::Occupied) => println!("Voxel at {:?} is occupied", center),
-        Some(VoxelState::Free) => println!("Voxel at {:?} is free", center),
-        None => println!("Voxel at {:?} is out of bounds", center),
+impl Eq for State {}
+
+impl Ord for State {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.f.partial_cmp(&self.f).unwrap_or(Ordering::Equal)
+    }
+}
+
+impl PartialOrd for State {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+/// 3D octile distance — admissible heuristic for a 26-connected grid.
+fn heuristic(a: Coords3D, b: Coords3D) -> f64 {
+    let dx = (a.0 - b.0).abs() as f64;
+    let dy = (a.1 - b.1).abs() as f64;
+    let dz = (a.2 - b.2).abs() as f64;
+    let mut dims = [dx, dy, dz];
+    dims.sort_by(|x, y| y.partial_cmp(x).unwrap());
+    let (s, m, l) = (dims[2], dims[1], dims[0]);
+    (l - m) + (m - s) * std::f64::consts::SQRT_2 + s * 3f64.sqrt()
+}
+
+fn move_cost(a: Coords3D, b: Coords3D) -> f64 {
+    let dx = (a.0 - b.0) as f64;
+    let dy = (a.1 - b.1) as f64;
+    let dz = (a.2 - b.2) as f64;
+    (dx * dx + dy * dy + dz * dz).sqrt()
+}
+
+fn astar(octree: &Octree3D, start: Coords3D, goal: Coords3D) -> Option<f64> {
+    if !matches!(octree.get_voxel(start), Some(VoxelState::Free)) {
+        return None;
+    }
+    if !matches!(octree.get_voxel(goal), Some(VoxelState::Free)) {
+        return None;
     }
 
-    // Get all neighbors of a voxel
-    let neighbors = octree.get_neighbors(center);
-    println!("Voxel at {:?} has {} neighbors within bounds", center, neighbors.len());
+    let mut open = BinaryHeap::new();
+    let mut g_score: HashMap<Coords3D, f64> = HashMap::new();
 
-    // Get only free neighbors (useful for pathfinding)
-    let free_neighbors = octree.get_free_neighbors(center);
-    println!("Free neighbors: {:?}", free_neighbors);
+    g_score.insert(start, 0.0);
+    open.push(State {
+        f: heuristic(start, goal),
+        g: 0.0,
+        coords: start,
+    });
 
-    // Get only occupied neighbors (useful for collision detection)
-    let occupied_neighbors = octree.get_occupied_neighbors(center);
-    println!("Occupied neighbors: {:?}", occupied_neighbors);
+    while let Some(State { g, coords, .. }) = open.pop() {
+        if coords == goal {
+            return Some(g);
+        }
+        if g > *g_score.get(&coords).unwrap_or(&f64::INFINITY) {
+            continue;
+        }
+        for neighbor in octree.get_free_neighbors(coords) {
+            let new_g = g + move_cost(coords, neighbor);
+            if new_g < *g_score.get(&neighbor).unwrap_or(&f64::INFINITY) {
+                g_score.insert(neighbor, new_g);
+                open.push(State {
+                    f: new_g + heuristic(neighbor, goal),
+                    g: new_g,
+                    coords: neighbor,
+                });
+            }
+        }
+    }
 
-    // Example of pathfinding-like usage
-    let start = (1, 1, 1);
-    let goal = (10, 10, 10);
-    
-    println!("\nPathfinding example:");
-    println!("Start: {:?} - {:?}", start, octree.get_voxel(start).unwrap());
-    println!("Goal: {:?} - {:?}", goal, octree.get_voxel(goal).unwrap());
-    
-    // Get valid moves from start position
-    let valid_moves = octree.get_free_neighbors(start);
-    println!("Valid moves from start: {} options", valid_moves.len());
-    
-    // Example of checking a path segment
-    let path_point = (5, 5, 6); // Right above the occupied voxel
-    let neighbors_around_path = octree.get_neighbors(path_point);
-    let obstacles_nearby = octree.get_occupied_neighbors(path_point);
-    
-    println!("\nPath point {:?}:", path_point);
-    println!("Total neighbors: {}", neighbors_around_path.len());
-    println!("Obstacles nearby: {}", obstacles_nearby.len());
-    
-    if !obstacles_nearby.is_empty() {
-        println!("Warning: Obstacles detected near path point!");
-        for obstacle in obstacles_nearby {
-            println!("  Obstacle at: {:?}", obstacle);
+    None
+}
+
+// -- main ---------------------------------------------------------------------
+
+fn main() {
+    println!("Loading map...");
+    let octree = parse_3dmap_file(Path::new("./tests/A1.3dmap")).expect("Failed to load A1.3dmap");
+    println!("Octree size: {}^3\n", octree.size());
+
+    let scenarios = parse_3dscen_file(Path::new("./tests/A1.3dmap.3dscen"))
+        .expect("Failed to load A1.3dmap.3dscen");
+    println!(
+        "Loaded {} scenarios. Running A* on the 5 shortest...\n",
+        scenarios.len()
+    );
+
+    // Pick the 5 scenarios with the shortest optimal path to keep the demo fast.
+    let mut indexed: Vec<(usize, _)> = scenarios.iter().enumerate().collect();
+    indexed.sort_by(|a, b| a.1.optimal_length.partial_cmp(&b.1.optimal_length).unwrap());
+
+    for (i, scen) in indexed.iter().take(5) {
+        let start = scen.start_pos;
+        let goal = scen.goal_pos;
+        print!(
+            "Scenario {:>3}  {:?} -> {:?}  expected {:.5}  ",
+            i + 1,
+            start,
+            goal,
+            scen.optimal_length
+        );
+        match astar(&octree, start, goal) {
+            Some(length) => println!(
+                "found {:.5}  ratio {:.3}",
+                length,
+                length / scen.optimal_length
+            ),
+            None => println!("no path found"),
         }
     }
 }
