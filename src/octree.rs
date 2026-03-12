@@ -760,6 +760,59 @@ mod tests {
         assert!(octree.is_free((5, 5, 5))); // Outside the box
     }
 
+    /// Fill all 8 voxels of a 2×2×2 sub-region one by one, which should
+    /// trigger a collapse into a single Occupied leaf. Then verify that every
+    /// one of those voxels is still Occupied (i.e. no data was lost during
+    /// collapse), adjacent voxels outside the region are still Free, and that
+    /// `get_free_neighbors` of an adjacent cell does not reach into the
+    /// collapsed block.
+    #[test]
+    fn test_collapse_preserves_occupancy() {
+        let mut octree = Octree3D::new(8, (0, 0, 0), VoxelState::Free);
+
+        // Fill all 8 voxels of the {0,1}³ sub-region individually.
+        for x in 0..2_i32 {
+            for y in 0..2_i32 {
+                for z in 0..2_i32 {
+                    assert!(octree.set_voxel((x, y, z), VoxelState::Occupied));
+                }
+            }
+        }
+
+        // Every voxel in the collapsed region must still be Occupied.
+        for x in 0..2_i32 {
+            for y in 0..2_i32 {
+                for z in 0..2_i32 {
+                    assert_eq!(
+                        octree.get_voxel((x, y, z)),
+                        Some(VoxelState::Occupied),
+                        "voxel ({x},{y},{z}) lost after collapse"
+                    );
+                }
+            }
+        }
+
+        // Voxels just outside the collapsed region must still be Free.
+        assert_eq!(octree.get_voxel((2, 0, 0)), Some(VoxelState::Free));
+        assert_eq!(octree.get_voxel((0, 2, 0)), Some(VoxelState::Free));
+        assert_eq!(octree.get_voxel((0, 0, 2)), Some(VoxelState::Free));
+
+        // From (2, 0, 0) the cardinal move towards (1, 0, 0) is blocked, so
+        // no diagonal through the collapsed block should appear as free.
+        let free = octree.get_free_neighbors((2, 0, 0));
+        assert!(
+            !free.contains(&(1, 0, 0)),
+            "occupied voxel (1,0,0) must not appear as a free neighbor"
+        );
+        for &(nx, ny, nz) in &free {
+            assert_eq!(
+                octree.get_voxel((nx, ny, nz)),
+                Some(VoxelState::Free),
+                "get_free_neighbors returned occupied voxel ({nx},{ny},{nz})"
+            );
+        }
+    }
+
     #[test]
     fn test_sphere_obstacle() {
         let mut octree = Octree3D::new(16, (0, 0, 0), VoxelState::Free);

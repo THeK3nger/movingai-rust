@@ -327,6 +327,25 @@ pub fn parse_3dmap(contents: &str) -> io::Result<Octree3D> {
         octree.set_voxel((x, y, z), VoxelState::Occupied);
     }
 
+    // The octree is a cube of side `size`, but the declared map dimensions
+    // are width × height × depth (each ≤ size). Mark the three out-of-bounds
+    // slabs as Occupied so pathfinders cannot route through "ghost" free space
+    // beyond the declared map boundary.
+    //
+    //   Slab 1: x ∈ [width,  size) × y ∈ [0,      size) × z ∈ [0,     size)
+    //   Slab 2: x ∈ [0,     width) × y ∈ [height, size) × z ∈ [0,     size)
+    //   Slab 3: x ∈ [0,     width) × y ∈ [0,    height) × z ∈ [depth, size)
+    let s = size - 1;
+    if width < size {
+        octree.create_box_obstacle((width, 0, 0), (s, s, s));
+    }
+    if height < size {
+        octree.create_box_obstacle((0, height, 0), (width - 1, s, s));
+    }
+    if depth < size {
+        octree.create_box_obstacle((0, 0, depth), (width - 1, height - 1, s));
+    }
+
     Ok(octree)
 }
 

@@ -2,6 +2,7 @@ use std::path::Path;
 
 use movingai::Map2D;
 use movingai::MovingAiMap;
+use movingai::parser::parse_3dmap_file;
 use movingai::parser::parse_3dscen;
 use movingai::parser::parse_3dscen_file;
 use movingai::parser::parse_map_file;
@@ -123,6 +124,40 @@ fn parsing_3dscen_file() {
     assert_eq!(scen[0].goal_pos, (577, 273, 142));
     assert!((scen[0].optimal_length - 562.04094761).abs() < 1e-6);
     assert!((scen[0].heuristic_ratio - 1.005).abs() < 1e-6);
+}
+
+/// Load the actual A1.3dmap and verify that every voxel listed in the file
+/// is marked Occupied in the octree — i.e. no voxel is silently dropped
+/// during bulk loading (e.g. due to a node-collapse bug).
+#[test]
+fn parsing_3dmap_no_voxels_lost() {
+    use std::fs::File;
+    use std::io::{BufRead, BufReader};
+
+    let octree = parse_3dmap_file(Path::new("./tests/A1.3dmap")).unwrap();
+
+    let file = File::open("./tests/A1.3dmap").unwrap();
+    let mut lines = BufReader::new(file).lines();
+    lines.next(); // skip header
+
+    for line in lines {
+        let line = line.unwrap();
+        if line.is_empty() {
+            continue;
+        }
+        let coords: Vec<i32> = line
+            .split_whitespace()
+            .map(|s| s.parse().unwrap())
+            .collect();
+        assert_eq!(
+            octree.get_voxel((coords[0], coords[1], coords[2])),
+            Some(movingai::octree::VoxelState::Occupied),
+            "voxel ({},{},{}) was listed as occupied but reads as free",
+            coords[0],
+            coords[1],
+            coords[2]
+        );
+    }
 }
 
 #[test]
