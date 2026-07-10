@@ -125,45 +125,67 @@ impl Octree3D {
     /// # Returns
     /// A vector of coordinates for free neighboring voxels.
     pub fn get_free_neighbors(&self, coords: Coords3D) -> Vec<Coords3D> {
-        let (x, y, z) = coords;
+        if !self.is_free(coords) {
+            return Vec::new();
+        }
+
         self.get_neighbors(coords)
             .into_iter()
             .filter_map(|(neighbor, state)| {
-                if state != VoxelState::Free {
-                    return None;
+                if state == VoxelState::Free && self.is_transition_clear(coords, neighbor) {
+                    Some(neighbor)
+                } else {
+                    None
                 }
-                let (nx, ny, nz) = neighbor;
-                let dx = nx - x;
-                let dy = ny - y;
-                let dz = nz - z;
-                // Diagonal moves are only allowed if every voxel touched by
-                // decomposing the move into cardinal actions is free. For a
-                // body diagonal this includes both the three cardinal and the
-                // three face-diagonal intermediate voxels.
-                let diagonal = (dx != 0) as u8 + (dy != 0) as u8 + (dz != 0) as u8 > 1;
-                if diagonal {
-                    if dx != 0 && !self.is_free((x + dx, y, z)) {
-                        return None;
-                    }
-                    if dy != 0 && !self.is_free((x, y + dy, z)) {
-                        return None;
-                    }
-                    if dz != 0 && !self.is_free((x, y, z + dz)) {
-                        return None;
-                    }
-                    if dx != 0
-                        && dy != 0
-                        && dz != 0
-                        && (!self.is_free((x + dx, y + dy, z))
-                            || !self.is_free((x + dx, y, z + dz))
-                            || !self.is_free((x, y + dy, z + dz)))
-                    {
-                        return None;
-                    }
-                }
-                Some(neighbor)
             })
             .collect()
+    }
+
+    /// Returns `true` when `from` and `to` are free adjacent voxels and the
+    /// transition does not cut through an occupied voxel.
+    pub fn is_traversable_from(&self, from: Coords3D, to: Coords3D) -> bool {
+        if !self.is_free(from) || !self.is_free(to) {
+            return false;
+        }
+
+        let delta = (
+            i64::from(to.0) - i64::from(from.0),
+            i64::from(to.1) - i64::from(from.1),
+            i64::from(to.2) - i64::from(from.2),
+        );
+        if delta == (0, 0, 0) || delta.0.abs() > 1 || delta.1.abs() > 1 || delta.2.abs() > 1 {
+            return false;
+        }
+
+        self.is_transition_clear(from, to)
+    }
+
+    /// Checks intermediate voxels for an already validated adjacent move
+    /// between two free voxels.
+    fn is_transition_clear(&self, from: Coords3D, to: Coords3D) -> bool {
+        let (x, y, z) = from;
+        let dx = to.0 - x;
+        let dy = to.1 - y;
+        let dz = to.2 - z;
+        let changed_axes = (dx != 0) as u8 + (dy != 0) as u8 + (dz != 0) as u8;
+
+        if changed_axes <= 1 {
+            return true;
+        }
+        if dx != 0 && !self.is_free((x + dx, y, z)) {
+            return false;
+        }
+        if dy != 0 && !self.is_free((x, y + dy, z)) {
+            return false;
+        }
+        if dz != 0 && !self.is_free((x, y, z + dz)) {
+            return false;
+        }
+
+        changed_axes != 3
+            || (self.is_free((x + dx, y + dy, z))
+                && self.is_free((x + dx, y, z + dz))
+                && self.is_free((x, y + dy, z + dz)))
     }
 
     /// Gets only the occupied neighboring voxels around the given coordinates.
@@ -621,7 +643,6 @@ mod tests {
         let mut octree = Octree3D::new(8, (0, 0, 0), VoxelState::Free);
 
         // Set some occupied voxels
-        octree.set_voxel((1, 1, 1), VoxelState::Occupied);
         octree.set_voxel((2, 1, 1), VoxelState::Occupied);
         octree.set_voxel((1, 2, 1), VoxelState::Occupied);
 

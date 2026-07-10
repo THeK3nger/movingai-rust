@@ -251,8 +251,10 @@ impl Map3D for VoxelMap {
         self.is_free(coords)
     }
 
-    fn is_traversable_from(&self, _from: Coords3D, to: Coords3D) -> bool {
-        self.is_free(to)
+    fn is_traversable_from(&self, from: Coords3D, to: Coords3D) -> bool {
+        self.is_within_bounds(from)
+            && self.is_within_bounds(to)
+            && self.octree.is_traversable_from(from, to)
     }
 
     fn neighbors(&self, coords: Coords3D) -> Vec<Coords3D> {

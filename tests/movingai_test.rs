@@ -235,6 +235,36 @@ fn parsed_3dmap_utilities_do_not_modify_padding() {
 }
 
 #[test]
+fn voxel_map_traversability_validates_the_complete_move() {
+    use movingai::{Map3D, VoxelMap, VoxelState};
+
+    let from = (1, 1, 1);
+    let mut map = VoxelMap::new(4, (0, 0, 0), VoxelState::Free);
+
+    assert!(map.is_traversable_from(from, (2, 1, 1)));
+    assert!(map.is_traversable_from(from, (2, 2, 1)));
+    assert!(map.is_traversable_from(from, (2, 2, 2)));
+    assert!(!map.is_traversable_from(from, from));
+    assert!(!map.is_traversable_from(from, (3, 1, 1)));
+    assert!(!map.is_traversable_from((-1, 1, 1), from));
+    assert!(!map.is_traversable_from(from, (4, 1, 1)));
+
+    map.set_voxel(from, VoxelState::Occupied);
+    assert!(!map.is_traversable_from(from, (2, 1, 1)));
+    assert!(map.neighbors(from).is_empty());
+    map.set_voxel(from, VoxelState::Free);
+
+    map.set_voxel((2, 1, 1), VoxelState::Occupied);
+    assert!(!map.is_traversable_from(from, (2, 1, 1)));
+    assert!(!map.is_traversable_from(from, (2, 2, 1)));
+    map.set_voxel((2, 1, 1), VoxelState::Free);
+
+    map.set_voxel((2, 2, 1), VoxelState::Occupied);
+    assert!(!map.is_traversable_from(from, (2, 2, 2)));
+    assert!(!map.neighbors(from).contains(&(2, 2, 2)));
+}
+
+#[test]
 fn parse_3dscen_malformed_line_returns_error() {
     let malformed = "version 1\nA1.3dmap\n101 109";
     let result = parse_3dscen(malformed);
