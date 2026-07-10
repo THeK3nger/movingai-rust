@@ -330,10 +330,14 @@ pub fn parse_3dmap(contents: &str) -> Result<VoxelMap, ParseError> {
     }
 
     let max_dim = width.max(height).max(depth);
-    let mut size = 1;
-    while size < max_dim {
-        size <<= 1;
-    }
+    let size = u32::try_from(max_dim)
+        .ok()
+        .and_then(u32::checked_next_power_of_two)
+        .and_then(|size| i32::try_from(size).ok())
+        .ok_or_else(|| ParseError::InvalidField {
+            field: "3D map dimensions",
+            value: format!("{}x{}x{}", width, height, depth),
+        })?;
 
     let mut octree = Octree3D::new(size, (0, 0, 0), VoxelState::Free);
 

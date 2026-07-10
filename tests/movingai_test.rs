@@ -212,6 +212,37 @@ fn parsed_3dmap_preserves_declared_dimensions_and_bounds() {
 }
 
 #[test]
+fn parse_3dmap_rejects_dimensions_larger_than_octree_storage() {
+    use movingai::parser::ParseError;
+
+    let result = parse_3dmap("voxel 1073741825 1 1\n");
+    assert!(matches!(
+        result,
+        Err(ParseError::InvalidField {
+            field: "3D map dimensions",
+            ..
+        })
+    ));
+
+    let result = parse_3dmap("voxel 2147483647 1 1\n");
+    assert!(matches!(
+        result,
+        Err(ParseError::InvalidField {
+            field: "3D map dimensions",
+            ..
+        })
+    ));
+}
+
+#[test]
+fn parse_3dmap_accepts_largest_supported_octree_size() {
+    let map = parse_3dmap("voxel 1073741824 1 1\n").unwrap();
+
+    assert_eq!(map.dimensions(), (1073741824, 1, 1));
+    assert_eq!(map.size(), 1073741824);
+}
+
+#[test]
 fn parsed_3dmap_utilities_do_not_modify_padding() {
     use movingai::VoxelState;
 
