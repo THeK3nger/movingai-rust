@@ -7,6 +7,9 @@ use std::error::Error;
 use std::fmt;
 use std::fs::File;
 use std::io;
+use std::io::BufRead;
+use std::io::BufReader;
+use std::io::Cursor;
 use std::io::Read;
 use std::path;
 
@@ -271,45 +274,53 @@ pub fn parse_scen(contents: &str) -> Result<Vec<SceneRecord>, ParseError> {
 
 /// Parse a MovingAI `.3dmap` file into a [`VoxelMap`].
 pub fn parse_3dmap_file(path: &path::Path) -> Result<VoxelMap, ParseError> {
-    let mut file = File::open(path)?;
-    let mut contents = String::new();
-    file.read_to_string(&mut contents)?;
-    parse_3dmap(&contents)
+    let file = File::open(path)?;
+    parse_3dmap_reader(BufReader::new(file))
 }
 
 /// Parse a string representing a MovingAI `.3dmap` into a [`VoxelMap`].
 pub fn parse_3dmap(contents: &str) -> Result<VoxelMap, ParseError> {
-    let mut lines = contents.lines();
+    parse_3dmap_reader(Cursor::new(contents.as_bytes()))
+}
 
-    let header = lines
-        .next()
-        .ok_or(ParseError::InvalidHeader("3dmap file is empty"))?;
+fn parse_3dmap_reader<R: BufRead>(mut reader: R) -> Result<VoxelMap, ParseError> {
+    let mut line = String::new();
+    if reader.read_line(&mut line)? == 0 {
+        return Err(ParseError::InvalidHeader("3dmap file is empty"));
+    }
 
-    let parts: Vec<&str> = header.split_whitespace().collect();
-    if parts.len() != 4 || parts[0] != "voxel" {
+    let mut parts = line.split_whitespace();
+    let (Some(kind), Some(width), Some(height), Some(depth), None) = (
+        parts.next(),
+        parts.next(),
+        parts.next(),
+        parts.next(),
+        parts.next(),
+    ) else {
+        return Err(ParseError::InvalidHeader(
+            "3dmap file must start with: voxel <width> <height> <depth>",
+        ));
+    };
+    if kind != "voxel" {
         return Err(ParseError::InvalidHeader(
             "3dmap file must start with: voxel <width> <height> <depth>",
         ));
     }
 
-    let width = parts[1]
-        .parse::<i32>()
-        .map_err(|_| ParseError::InvalidField {
-            field: "width",
-            value: parts[1].to_string(),
-        })?;
-    let height = parts[2]
+    let width = width.parse::<i32>().map_err(|_| ParseError::InvalidField {
+        field: "width",
+        value: width.to_string(),
+    })?;
+    let height = height
         .parse::<i32>()
         .map_err(|_| ParseError::InvalidField {
             field: "height",
-            value: parts[2].to_string(),
+            value: height.to_string(),
         })?;
-    let depth = parts[3]
-        .parse::<i32>()
-        .map_err(|_| ParseError::InvalidField {
-            field: "depth",
-            value: parts[3].to_string(),
-        })?;
+    let depth = depth.parse::<i32>().map_err(|_| ParseError::InvalidField {
+        field: "depth",
+        value: depth.to_string(),
+    })?;
     if width <= 0 {
         return Err(ParseError::InvalidField {
             field: "width",
@@ -341,37 +352,46 @@ pub fn parse_3dmap(contents: &str) -> Result<VoxelMap, ParseError> {
 
     let mut octree = Octree3D::new(size, (0, 0, 0), VoxelState::Free);
 
-    for line in lines {
-        if line.is_empty() {
+    loop {
+        line.clear();
+        if reader.read_line(&mut line)? == 0 {
+            break;
+        }
+        if line.trim().is_empty() {
             continue;
         }
-        let coords: Vec<&str> = line.split_whitespace().collect();
-        if coords.len() < 3 {
+
+        let mut coords = line.split_whitespace();
+        let Some(x) = coords.next() else {
+            continue;
+        };
+        let Some(y) = coords.next() else {
             return Err(ParseError::InvalidFieldCount {
                 kind: "3dmap voxel record",
                 expected: 3,
-                found: coords.len(),
+                found: 1,
             });
-        }
+        };
+        let Some(z) = coords.next() else {
+            return Err(ParseError::InvalidFieldCount {
+                kind: "3dmap voxel record",
+                expected: 3,
+                found: 2,
+            });
+        };
 
-        let x = coords[0]
-            .parse::<i32>()
-            .map_err(|_| ParseError::InvalidField {
-                field: "x",
-                value: coords[0].to_string(),
-            })?;
-        let y = coords[1]
-            .parse::<i32>()
-            .map_err(|_| ParseError::InvalidField {
-                field: "y",
-                value: coords[1].to_string(),
-            })?;
-        let z = coords[2]
-            .parse::<i32>()
-            .map_err(|_| ParseError::InvalidField {
-                field: "z",
-                value: coords[2].to_string(),
-            })?;
+        let x = x.parse::<i32>().map_err(|_| ParseError::InvalidField {
+            field: "x",
+            value: x.to_string(),
+        })?;
+        let y = y.parse::<i32>().map_err(|_| ParseError::InvalidField {
+            field: "y",
+            value: y.to_string(),
+        })?;
+        let z = z.parse::<i32>().map_err(|_| ParseError::InvalidField {
+            field: "z",
+            value: z.to_string(),
+        })?;
 
         if x < 0 || y < 0 || z < 0 || x >= width || y >= height || z >= depth {
             return Err(ParseError::OutOfBoundsVoxel { x, y, z });

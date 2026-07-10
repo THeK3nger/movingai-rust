@@ -125,20 +125,86 @@ impl Octree3D {
     /// # Returns
     /// A vector of coordinates for free neighboring voxels.
     pub fn get_free_neighbors(&self, coords: Coords3D) -> Vec<Coords3D> {
-        if !self.is_free(coords) {
+        if !self.is_within_bounds(coords) {
             return Vec::new();
         }
 
-        self.get_neighbors(coords)
-            .into_iter()
-            .filter_map(|(neighbor, state)| {
-                if state == VoxelState::Free && self.is_transition_clear(coords, neighbor) {
-                    Some(neighbor)
-                } else {
-                    None
+        // Cache the complete local neighborhood so diagonal-clearance checks
+        // reuse voxel states instead of repeatedly walking the octree.
+        let states = self.neighborhood_states(coords);
+        if states[Self::neighborhood_index(0, 0, 0)] != Some(VoxelState::Free) {
+            return Vec::new();
+        }
+
+        let mut neighbors = Vec::with_capacity(26);
+        for dx in -1..=1 {
+            for dy in -1..=1 {
+                for dz in -1..=1 {
+                    if (dx, dy, dz) == (0, 0, 0) {
+                        continue;
+                    }
+                    if states[Self::neighborhood_index(dx, dy, dz)] == Some(VoxelState::Free)
+                        && Self::is_cached_transition_clear(&states, dx, dy, dz)
+                        && let Some(neighbor) = Self::offset_coords(coords, dx, dy, dz)
+                    {
+                        neighbors.push(neighbor);
+                    }
                 }
-            })
-            .collect()
+            }
+        }
+        neighbors
+    }
+
+    fn neighborhood_states(&self, coords: Coords3D) -> [Option<VoxelState>; 27] {
+        let mut states = [None; 27];
+        for dx in -1..=1 {
+            for dy in -1..=1 {
+                for dz in -1..=1 {
+                    if let Some(neighbor) = Self::offset_coords(coords, dx, dy, dz) {
+                        states[Self::neighborhood_index(dx, dy, dz)] = self.get_voxel(neighbor);
+                    }
+                }
+            }
+        }
+        states
+    }
+
+    fn neighborhood_index(dx: i32, dy: i32, dz: i32) -> usize {
+        debug_assert!((-1..=1).contains(&dx));
+        debug_assert!((-1..=1).contains(&dy));
+        debug_assert!((-1..=1).contains(&dz));
+        ((dx + 1) * 9 + (dy + 1) * 3 + dz + 1) as usize
+    }
+
+    fn offset_coords(coords: Coords3D, dx: i32, dy: i32, dz: i32) -> Option<Coords3D> {
+        Some((
+            coords.0.checked_add(dx)?,
+            coords.1.checked_add(dy)?,
+            coords.2.checked_add(dz)?,
+        ))
+    }
+
+    fn is_cached_transition_clear(
+        states: &[Option<VoxelState>; 27],
+        dx: i32,
+        dy: i32,
+        dz: i32,
+    ) -> bool {
+        let is_free =
+            |dx, dy, dz| states[Self::neighborhood_index(dx, dy, dz)] == Some(VoxelState::Free);
+        let changed_axes = (dx != 0) as u8 + (dy != 0) as u8 + (dz != 0) as u8;
+
+        if changed_axes <= 1 {
+            return true;
+        }
+        if (dx != 0 && !is_free(dx, 0, 0))
+            || (dy != 0 && !is_free(0, dy, 0))
+            || (dz != 0 && !is_free(0, 0, dz))
+        {
+            return false;
+        }
+
+        changed_axes != 3 || (is_free(dx, dy, 0) && is_free(dx, 0, dz) && is_free(0, dy, dz))
     }
 
     /// Returns `true` when `from` and `to` are free adjacent voxels and the

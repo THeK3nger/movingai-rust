@@ -26,3 +26,7 @@ criterion = "0.5"
 [[bench]]
 name = "neighbors_bench"
 harness = false
+
+[[bench]]
+name = "octree_bench"
+harness = false

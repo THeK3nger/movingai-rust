@@ -293,6 +293,22 @@ fn voxel_map_traversability_validates_the_complete_move() {
     map.set_voxel((2, 2, 1), VoxelState::Occupied);
     assert!(!map.is_traversable_from(from, (2, 2, 2)));
     assert!(!map.neighbors(from).contains(&(2, 2, 2)));
+
+    let neighbors = map.neighbors(from);
+    for dx in -1..=1 {
+        for dy in -1..=1 {
+            for dz in -1..=1 {
+                if (dx, dy, dz) != (0, 0, 0) {
+                    let to = (from.0 + dx, from.1 + dy, from.2 + dz);
+                    assert_eq!(
+                        neighbors.contains(&to),
+                        map.is_traversable_from(from, to),
+                        "neighbors and is_traversable_from disagree for {from:?} -> {to:?}"
+                    );
+                }
+            }
+        }
+    }
 }
 
 #[test]

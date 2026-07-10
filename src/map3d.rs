@@ -103,11 +103,9 @@ impl VoxelMap {
         if !self.is_within_bounds(coords) {
             return Vec::new();
         }
-        self.octree
-            .get_neighbors(coords)
-            .into_iter()
-            .filter(|(neighbor, _)| self.is_within_bounds(*neighbor))
-            .collect()
+        let mut neighbors = self.octree.get_neighbors(coords);
+        neighbors.retain(|(neighbor, _)| self.is_within_bounds(*neighbor));
+        neighbors
     }
 
     /// Returns the coordinates of all free neighbours reachable from `coords`.
@@ -118,11 +116,9 @@ impl VoxelMap {
         if !self.is_within_bounds(coords) {
             return Vec::new();
         }
-        self.octree
-            .get_free_neighbors(coords)
-            .into_iter()
-            .filter(|&neighbor| self.is_within_bounds(neighbor))
-            .collect()
+        let mut neighbors = self.octree.get_free_neighbors(coords);
+        neighbors.retain(|&neighbor| self.is_within_bounds(neighbor));
+        neighbors
     }
 
     /// Returns the coordinates of all occupied neighbours of `coords`.
@@ -130,11 +126,9 @@ impl VoxelMap {
         if !self.is_within_bounds(coords) {
             return Vec::new();
         }
-        self.octree
-            .get_occupied_neighbors(coords)
-            .into_iter()
-            .filter(|&neighbor| self.is_within_bounds(neighbor))
-            .collect()
+        let mut neighbors = self.octree.get_occupied_neighbors(coords);
+        neighbors.retain(|&neighbor| self.is_within_bounds(neighbor));
+        neighbors
     }
 
     /// Sets multiple voxels at once.
