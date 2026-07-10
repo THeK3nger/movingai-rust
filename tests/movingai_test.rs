@@ -169,6 +169,18 @@ fn parsing_3dmap_no_voxels_lost() {
 }
 
 #[test]
+fn parsed_3dmap_rejects_body_diagonal_through_obstacle() {
+    use movingai::Map3D;
+
+    let map = parse_3dmap_file(Path::new("./tests/A1.3dmap")).unwrap();
+
+    // This transition previously allowed a path shorter than the published
+    // optimum for scenario 1884. The occupied face-diagonal intermediate at
+    // (550, 254, 136) means a full-voxel agent cannot make this move.
+    assert!(!map.neighbors((549, 253, 136)).contains(&(550, 254, 135)));
+}
+
+#[test]
 fn parse_3dscen_malformed_line_returns_error() {
     let malformed = "version 1\nA1.3dmap\n101 109";
     let result = parse_3dscen(malformed);

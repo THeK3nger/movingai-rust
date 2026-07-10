@@ -136,8 +136,10 @@ impl Octree3D {
                 let dx = nx - x;
                 let dy = ny - y;
                 let dz = nz - z;
-                // Diagonal moves are only allowed if each individual cardinal
-                // action is also possible (i.e. leads to a free voxel).
+                // Diagonal moves are only allowed if every voxel touched by
+                // decomposing the move into cardinal actions is free. For a
+                // body diagonal this includes both the three cardinal and the
+                // three face-diagonal intermediate voxels.
                 let diagonal = (dx != 0) as u8 + (dy != 0) as u8 + (dz != 0) as u8 > 1;
                 if diagonal {
                     if dx != 0 && !self.is_free((x + dx, y, z)) {
@@ -148,6 +150,14 @@ impl Octree3D {
                     }
                     if dz != 0 && !self.is_free((x, y, z + dz)) {
                         return None;
+                    }
+                    if dx != 0 && dy != 0 && dz != 0 {
+                        if !self.is_free((x + dx, y + dy, z))
+                            || !self.is_free((x + dx, y, z + dz))
+                            || !self.is_free((x, y + dy, z + dz))
+                        {
+                            return None;
+                        }
                     }
                 }
                 Some(neighbor)
@@ -686,6 +696,19 @@ mod tests {
         // Test occupied neighbors
         let occupied_neighbors = octree.get_occupied_neighbors((1, 1, 1));
         assert_eq!(occupied_neighbors.len(), 2); // (2,1,1) and (1,2,1)
+    }
+
+    #[test]
+    fn test_body_diagonal_cannot_cut_through_face_diagonal_obstacle() {
+        let mut octree = Octree3D::new(4, (0, 0, 0), VoxelState::Free);
+        let from = (1, 1, 1);
+        let to = (2, 2, 2);
+
+        // All three cardinal intermediates are free, but this voxel is one of
+        // the three face-diagonal intermediates touched by the body diagonal.
+        octree.set_voxel((2, 2, 1), VoxelState::Occupied);
+
+        assert!(!octree.get_free_neighbors(from).contains(&to));
     }
 
     #[test]
