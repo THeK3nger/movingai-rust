@@ -151,13 +151,14 @@ impl Octree3D {
                     if dz != 0 && !self.is_free((x, y, z + dz)) {
                         return None;
                     }
-                    if dx != 0 && dy != 0 && dz != 0 {
-                        if !self.is_free((x + dx, y + dy, z))
+                    if dx != 0
+                        && dy != 0
+                        && dz != 0
+                        && (!self.is_free((x + dx, y + dy, z))
                             || !self.is_free((x + dx, y, z + dz))
-                            || !self.is_free((x, y + dy, z + dz))
-                        {
-                            return None;
-                        }
+                            || !self.is_free((x, y + dy, z + dz)))
+                    {
+                        return None;
                     }
                 }
                 Some(neighbor)
@@ -386,37 +387,6 @@ impl Octree3D {
         matches!(self.get_voxel(coords), Some(VoxelState::Free))
     }
 
-    /// Checks if a voxel is occupied.
-    ///
-    /// # Arguments
-    /// * `coords` - The coordinates to check
-    ///
-    /// # Returns
-    /// `true` if the voxel is occupied and within bounds, `false` otherwise.
-    pub fn is_occupied(&self, coords: Coords3D) -> bool {
-        matches!(self.get_voxel(coords), Some(VoxelState::Occupied))
-    }
-
-    /// Sets multiple voxels at once.
-    ///
-    /// # Arguments
-    /// * `coords_and_states` - An iterator of (coordinates, state) pairs
-    ///
-    /// # Returns
-    /// The number of voxels successfully set.
-    pub fn set_voxels<I>(&mut self, coords_and_states: I) -> usize
-    where
-        I: IntoIterator<Item = (Coords3D, VoxelState)>,
-    {
-        let mut count = 0;
-        for (coords, state) in coords_and_states {
-            if self.set_voxel(coords, state) {
-                count += 1;
-            }
-        }
-        count
-    }
-
     /// Counts the number of occupied voxels in a given region.
     ///
     /// Uses recursive tree traversal to skip entire subtrees when a node
@@ -610,36 +580,6 @@ impl Octree3D {
             }
         }
     }
-
-    /// Creates a sphere-shaped obstacle in the 3D space.
-    ///
-    /// # Arguments
-    /// * `center` - The center of the sphere
-    /// * `radius` - The radius of the sphere
-    ///
-    /// # Returns
-    /// The number of voxels set as occupied.
-    pub fn create_sphere_obstacle(&mut self, center: Coords3D, radius: f32) -> usize {
-        let mut count = 0;
-        let (cx, cy, cz) = center;
-        let r = radius as i32 + 1; // Include boundary
-
-        for x in (cx - r)..=(cx + r) {
-            for y in (cy - r)..=(cy + r) {
-                for z in (cz - r)..=(cz + r) {
-                    let dx = (x - cx) as f32;
-                    let dy = (y - cy) as f32;
-                    let dz = (z - cz) as f32;
-                    let distance = (dx * dx + dy * dy + dz * dz).sqrt();
-
-                    if distance <= radius && self.set_voxel((x, y, z), VoxelState::Occupied) {
-                        count += 1;
-                    }
-                }
-            }
-        }
-        count
-    }
 }
 
 #[cfg(test)]
@@ -735,23 +675,17 @@ mod tests {
     fn test_utility_methods() {
         let mut octree = Octree3D::new(8, (0, 0, 0), VoxelState::Free);
 
-        // Test is_free and is_occupied
+        // Test is_free and occupied state queries
         assert!(octree.is_free((1, 1, 1)));
-        assert!(!octree.is_occupied((1, 1, 1)));
+        assert_ne!(octree.get_voxel((1, 1, 1)), Some(VoxelState::Occupied));
 
         octree.set_voxel((1, 1, 1), VoxelState::Occupied);
         assert!(!octree.is_free((1, 1, 1)));
-        assert!(octree.is_occupied((1, 1, 1)));
+        assert_eq!(octree.get_voxel((1, 1, 1)), Some(VoxelState::Occupied));
 
-        // Test set_voxels
-        let coords_and_states = vec![
-            ((2, 2, 2), VoxelState::Occupied),
-            ((3, 3, 3), VoxelState::Occupied),
-            ((10, 10, 10), VoxelState::Occupied), // Out of bounds
-        ];
-
-        let count = octree.set_voxels(coords_and_states);
-        assert_eq!(count, 2); // Only 2 should be set (third is out of bounds)
+        assert!(octree.set_voxel((2, 2, 2), VoxelState::Occupied));
+        assert!(octree.set_voxel((3, 3, 3), VoxelState::Occupied));
+        assert!(!octree.set_voxel((10, 10, 10), VoxelState::Occupied));
 
         // Test count_occupied_in_region
         let occupied_count = octree.count_occupied_in_region((0, 0, 0), (4, 4, 4));
@@ -766,9 +700,9 @@ mod tests {
         assert_eq!(count, 27); // 3x3x3 = 27 voxels
 
         // Check that the box is actually created
-        assert!(octree.is_occupied((2, 2, 2)));
-        assert!(octree.is_occupied((3, 3, 3)));
-        assert!(octree.is_occupied((4, 4, 4)));
+        assert_eq!(octree.get_voxel((2, 2, 2)), Some(VoxelState::Occupied));
+        assert_eq!(octree.get_voxel((3, 3, 3)), Some(VoxelState::Occupied));
+        assert_eq!(octree.get_voxel((4, 4, 4)), Some(VoxelState::Occupied));
         assert!(octree.is_free((1, 1, 1))); // Outside the box
         assert!(octree.is_free((5, 5, 5))); // Outside the box
     }
@@ -824,26 +758,5 @@ mod tests {
                 "get_free_neighbors returned occupied voxel ({nx},{ny},{nz})"
             );
         }
-    }
-
-    #[test]
-    fn test_sphere_obstacle() {
-        let mut octree = Octree3D::new(16, (0, 0, 0), VoxelState::Free);
-
-        let center = (8, 8, 8);
-        let radius = 2.0;
-        let count = octree.create_sphere_obstacle(center, radius);
-
-        assert!(count > 0);
-
-        // Check that the center is occupied
-        assert!(octree.is_occupied(center));
-
-        // Check that voxels within radius are occupied
-        assert!(octree.is_occupied((7, 8, 8))); // Distance = 1
-        assert!(octree.is_occupied((8, 7, 8))); // Distance = 1
-
-        // Check that voxels outside radius are free
-        assert!(octree.is_free((5, 8, 8))); // Distance = 3 > radius
     }
 }

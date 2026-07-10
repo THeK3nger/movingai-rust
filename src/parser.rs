@@ -376,18 +376,7 @@ pub fn parse_3dmap(contents: &str) -> Result<VoxelMap, ParseError> {
         octree.set_voxel((x, y, z), VoxelState::Occupied);
     }
 
-    let s = size - 1;
-    if width < size {
-        octree.create_box_obstacle((width, 0, 0), (s, s, s));
-    }
-    if height < size {
-        octree.create_box_obstacle((0, height, 0), (width - 1, s, s));
-    }
-    if depth < size {
-        octree.create_box_obstacle((0, 0, depth), (width - 1, height - 1, s));
-    }
-
-    Ok(VoxelMap(octree))
+    Ok(VoxelMap::from_octree(octree, (width, height, depth)))
 }
 
 /// Parse a MovingAI `.3dscen` file.

@@ -91,7 +91,11 @@ fn astar(octree: &VoxelMap, start: Coords3D, goal: Coords3D) -> Option<f64> {
 fn main() {
     println!("Loading map...");
     let octree = parse_3dmap_file(Path::new("./tests/A1.3dmap")).expect("Failed to load A1.3dmap");
-    println!("Octree size: {}^3\n", octree.size());
+    println!(
+        "Map dimensions: {:?} (octree storage: {}^3)\n",
+        octree.dimensions(),
+        octree.size()
+    );
 
     let scenarios = parse_3dscen_file(Path::new("./tests/A1.3dmap.3dscen"))
         .expect("Failed to load A1.3dmap.3dscen");

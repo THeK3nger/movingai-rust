@@ -3,6 +3,7 @@ use std::path::Path;
 use movingai::Map2D;
 use movingai::MapType;
 use movingai::MovingAiMap;
+use movingai::parser::parse_3dmap;
 use movingai::parser::parse_3dmap_file;
 use movingai::parser::parse_3dscen;
 use movingai::parser::parse_3dscen_file;
@@ -143,6 +144,7 @@ fn parsing_3dmap_no_voxels_lost() {
     use std::io::{BufRead, BufReader};
 
     let octree = parse_3dmap_file(Path::new("./tests/A1.3dmap")).unwrap();
+    assert_eq!(octree.dimensions(), (896, 390, 255));
 
     let file = File::open("./tests/A1.3dmap").unwrap();
     let mut lines = BufReader::new(file).lines();
@@ -178,6 +180,58 @@ fn parsed_3dmap_rejects_body_diagonal_through_obstacle() {
     // optimum for scenario 1884. The occupied face-diagonal intermediate at
     // (550, 254, 136) means a full-voxel agent cannot make this move.
     assert!(!map.neighbors((549, 253, 136)).contains(&(550, 254, 135)));
+}
+
+#[test]
+fn parsed_3dmap_preserves_declared_dimensions_and_bounds() {
+    use movingai::{Map3D, VoxelState};
+
+    let mut map = parse_3dmap("voxel 3 2 1\n2 1 0\n").unwrap();
+
+    assert_eq!(map.dimensions(), (3, 2, 1));
+    assert_eq!(map.size(), 4);
+    assert_eq!(map.get_voxel((2, 1, 0)), Some(VoxelState::Occupied));
+
+    for outside in [(3, 0, 0), (0, 2, 0), (0, 0, 1)] {
+        assert!(map.is_out_of_bounds(outside));
+        assert_eq!(map.get_voxel(outside), None);
+        assert!(!map.is_free(outside));
+        assert!(!map.is_occupied(outside));
+        assert!(!map.set_voxel(outside, VoxelState::Occupied));
+        assert!(map.get_neighbors(outside).is_empty());
+        assert!(map.neighbors(outside).is_empty());
+    }
+
+    let edge_neighbors = map.get_neighbors((2, 1, 0));
+    assert_eq!(edge_neighbors.len(), 3);
+    assert!(
+        edge_neighbors
+            .iter()
+            .all(|(coords, _)| !map.is_out_of_bounds(*coords))
+    );
+}
+
+#[test]
+fn parsed_3dmap_utilities_do_not_modify_padding() {
+    use movingai::VoxelState;
+
+    let mut map = parse_3dmap("voxel 3 2 1\n").unwrap();
+
+    assert_eq!(
+        map.set_voxels([
+            ((0, 0, 0), VoxelState::Occupied),
+            ((3, 0, 0), VoxelState::Occupied),
+        ]),
+        1
+    );
+    assert_eq!(map.create_box_obstacle((2, 1, 0), (3, 2, 1)), 1);
+    assert_eq!(map.count_occupied_in_region((0, 0, 0), (3, 2, 1)), 2);
+    assert_eq!(map.get_voxel((2, 1, 0)), Some(VoxelState::Occupied));
+    assert_eq!(map.get_voxel((3, 1, 0)), None);
+
+    let mut sphere_map = parse_3dmap("voxel 3 2 1\n").unwrap();
+    assert_eq!(sphere_map.create_sphere_obstacle((2, 0, 0), 1.0), 3);
+    assert_eq!(sphere_map.get_voxel((3, 0, 0)), None);
 }
 
 #[test]
