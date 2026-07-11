@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-07-11
+
+### Added
+
+- 3D voxel map support: parsing for `.3dmap`/`.3dscen` files and an octree-based structure for storing and efficiently navigating large voxel maps.
+
+### Breaking Changes
+
+- Parsing errors are now reported through a proper `ParseError` type instead of ad-hoc error handling.
+- `map_type` is now an enum instead of a string across the public API.
+- `is_out_of_bound` renamed to `is_out_of_bounds`.
+
+### Improvements
+
+- Reduced allocations in hot paths.
+
 ## [2.2.0] - 2026-03-12
 
 ### Added
