@@ -428,12 +428,12 @@ impl Octree3D {
 
     /// Tries to collapse an internal node if all children have the same state.
     fn try_collapse(node: &mut OctreeNode) {
-        if let OctreeNode::Internal { children } = node {
-            if let Some(uniform_state) = Self::get_uniform_state(children) {
-                *node = OctreeNode::Leaf {
-                    state: uniform_state,
-                };
-            }
+        if let OctreeNode::Internal { children } = node
+            && let Some(uniform_state) = Self::get_uniform_state(children)
+        {
+            *node = OctreeNode::Leaf {
+                state: uniform_state,
+            };
         }
     }
 
