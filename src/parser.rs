@@ -130,39 +130,40 @@ pub fn parse_map(contents: &str) -> Result<MovingAiMap, ParseError> {
         }
 
         let mut parts = line.split_whitespace();
-        if let (Some(key), Some(value)) = (parts.next(), parts.next()) {
-            if parts.next().is_none() {
-                match key {
-                    "type" => {
-                        map_type = Some(value.parse::<MapType>().map_err(|_| {
-                            ParseError::InvalidField {
-                                field: "map type",
-                                value: value.to_string(),
-                            }
-                        })?)
-                    }
-                    "height" => {
-                        let parsed =
+        if let (Some(key), Some(value)) = (parts.next(), parts.next())
+            && parts.next().is_none()
+        {
+            match key {
+                "type" => {
+                    map_type =
+                        Some(
                             value
-                                .parse::<usize>()
+                                .parse::<MapType>()
                                 .map_err(|_| ParseError::InvalidField {
-                                    field: "map height",
+                                    field: "map type",
                                     value: value.to_string(),
-                                })?;
-                        height = Some(parsed);
-                    }
-                    "width" => {
-                        let parsed =
-                            value
-                                .parse::<usize>()
-                                .map_err(|_| ParseError::InvalidField {
-                                    field: "map width",
-                                    value: value.to_string(),
-                                })?;
-                        width = Some(parsed);
-                    }
-                    _ => {}
+                                })?,
+                        )
                 }
+                "height" => {
+                    let parsed = value
+                        .parse::<usize>()
+                        .map_err(|_| ParseError::InvalidField {
+                            field: "map height",
+                            value: value.to_string(),
+                        })?;
+                    height = Some(parsed);
+                }
+                "width" => {
+                    let parsed = value
+                        .parse::<usize>()
+                        .map_err(|_| ParseError::InvalidField {
+                            field: "map width",
+                            value: value.to_string(),
+                        })?;
+                    width = Some(parsed);
+                }
+                _ => {}
             }
         }
     }
