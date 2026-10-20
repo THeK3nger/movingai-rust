@@ -580,9 +580,7 @@ impl Octree3D {
             local_min,
             local_max,
             VoxelState::Occupied,
-            0,
-            0,
-            0,
+            (0, 0, 0),
             self.size,
         )
     }
@@ -593,11 +591,10 @@ impl Octree3D {
         region_min: Coords3D,
         region_max: Coords3D,
         state: VoxelState,
-        node_x: i32,
-        node_y: i32,
-        node_z: i32,
+        node_origin: Coords3D,
         node_size: i32,
     ) -> usize {
+        let (node_x, node_y, node_z) = node_origin;
         let node_max_x = node_x + node_size - 1;
         let node_max_y = node_y + node_size - 1;
         let node_max_z = node_z + node_size - 1;
@@ -642,7 +639,12 @@ impl Octree3D {
                 let children = Self::create_children(*current_state);
                 *node = OctreeNode::Internal { children };
                 Self::set_region_recursive(
-                    node, region_min, region_max, state, node_x, node_y, node_z, node_size,
+                    node,
+                    region_min,
+                    region_max,
+                    state,
+                    node_origin,
+                    node_size,
                 )
             }
             OctreeNode::Internal { children } => {
@@ -656,9 +658,7 @@ impl Octree3D {
                         region_min,
                         region_max,
                         state,
-                        child_x,
-                        child_y,
-                        child_z,
+                        (child_x, child_y, child_z),
                         half_size,
                     );
                 }
