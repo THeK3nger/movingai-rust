@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [3.0.1] - 2026-10-20
+
+### Bug Fixes
+
+- Return `InvalidMapSize` instead of overflowing when map dimensions cannot be represented as a `usize`.
+- Return no coordinates when iterating over a map with an empty dimension.
+
 ## [3.0.0] - 2026-07-11
 
 ### Added
