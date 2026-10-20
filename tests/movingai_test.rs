@@ -19,6 +19,18 @@ fn indexing() {
 }
 
 #[test]
+fn map_construction_rejects_overflowing_dimensions() {
+    let result = MovingAiMap::new_from_slice(
+        MapType::Octile,
+        usize::MAX,
+        2,
+        Vec::new().into_boxed_slice(),
+    );
+
+    assert!(result.is_err());
+}
+
+#[test]
 fn parsing_map() {
     let map = parse_map_file(Path::new("./tests/arena.map")).unwrap();
     assert_eq!(map.width(), 49);

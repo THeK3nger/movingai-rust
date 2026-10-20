@@ -179,9 +179,6 @@ impl MovingAiMap {
         width: usize,
         map: Vec<char>,
     ) -> Result<MovingAiMap, ParseError> {
-        if map.len() != height * width {
-            return Err(ParseError::InvalidMapSize);
-        }
         MovingAiMap::new_from_slice(map_type, height, width, map.into_boxed_slice())
     }
 
@@ -202,7 +199,7 @@ impl MovingAiMap {
         width: usize,
         map: Box<[char]>,
     ) -> Result<MovingAiMap, ParseError> {
-        if map.len() != height * width {
+        if height.checked_mul(width) != Some(map.len()) {
             return Err(ParseError::InvalidMapSize);
         }
         Ok(MovingAiMap {
