@@ -31,6 +31,13 @@ fn map_construction_rejects_overflowing_dimensions() {
 }
 
 #[test]
+fn empty_map_has_no_coordinates() {
+    let map = MovingAiMap::new(MapType::Octile, 1, 0, Vec::new()).unwrap();
+
+    assert_eq!(map.coords().next(), None);
+}
+
+#[test]
 fn parsing_map() {
     let map = parse_map_file(Path::new("./tests/arena.map")).unwrap();
     assert_eq!(map.width(), 49);

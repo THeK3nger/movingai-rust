@@ -247,8 +247,8 @@ impl Iterator for CoordsIter {
         // We save the current value.
         let x = self.curr_x;
         let y = self.curr_y;
-        // If y is out of bound, we stop.
-        if self.curr_y >= self.height {
+        // If either dimension is empty or y is out of bounds, we stop.
+        if self.width == 0 || self.curr_y >= self.height {
             return None;
         }
         // We compute the next pair of values.
