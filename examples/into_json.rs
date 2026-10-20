@@ -1,5 +1,3 @@
-use serde_json;
-
 use std::path::Path;
 
 use movingai::parser::parse_map_file;
