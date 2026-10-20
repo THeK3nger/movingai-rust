@@ -101,7 +101,7 @@ fn main() {
         println!("  Free neighbors: {}", free_moves.len());
         println!("  Blocked neighbors: {}", blocked_neighbors.len());
 
-        if blocked_neighbors.len() > 0 {
+        if !blocked_neighbors.is_empty() {
             println!("  Nearby obstacles at:");
             for obstacle in blocked_neighbors.iter().take(5) {
                 println!("    {:?}", obstacle);
