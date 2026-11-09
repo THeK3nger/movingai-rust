@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [3.0.2] - 2026-11-09
+
 ### Changed
 
 - Updated `arrayvec` to 0.7.8, `serde` to 1.0.229, `serde_json` to 1.0.154, and refreshed transitive dependencies.
