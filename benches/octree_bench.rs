@@ -1,7 +1,8 @@
-use criterion::{Criterion, Throughput, black_box, criterion_group, criterion_main};
+use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use movingai::Map3D;
 use movingai::parser::{parse_3dmap, parse_3dmap_file};
 use std::fs;
+use std::hint::black_box;
 use std::path::Path;
 
 fn parse_3dmap_benchmark(c: &mut Criterion) {

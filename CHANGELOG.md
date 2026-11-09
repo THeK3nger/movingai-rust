@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- Updated `arrayvec` to 0.7.8, `serde` to 1.0.229, `serde_json` to 1.0.154, and refreshed transitive dependencies.
+- Updated Criterion from 0.5 to 0.8.2 (requires Rust 1.86 or newer for benchmarks) and migrated benchmarks to `std::hint::black_box`.
+
 ## [3.0.1] - 2026-10-20
 
 ### Bug Fixes
