@@ -358,26 +358,66 @@ impl Map2D<char> for MovingAiMap {
     }
 
     fn neighbors(&self, tile: Coords2D) -> ArrayVec<Coords2D, 8> {
-        const OFFSETS: [(isize, isize); 8] = [
-            (1, 0),
-            (-1, 0),
-            (0, 1),
-            (0, -1),
-            (1, 1),
-            (1, -1),
-            (-1, 1),
-            (-1, -1),
-        ];
+        // Same rules as `is_traversable_from` for a cardinal step, but on
+        // tiles already read from the map (no bounds or adjacency checks).
+        #[inline(always)]
+        fn step_ok(to: char, from: char) -> bool {
+            match to {
+                '.' | 'G' => true,
+                'S' => from == '.' || from == 'S',
+                'W' => from == 'W',
+                _ => false,
+            }
+        }
+        let mut out = ArrayVec::new();
         let (x, y) = tile;
-        OFFSETS
-            .iter()
-            .filter_map(|&(dx, dy)| {
-                let nx = x.checked_add_signed(dx)?;
-                let ny = y.checked_add_signed(dy)?;
-                Some((nx, ny))
-            })
-            .filter(|&neighbor| self.is_traversable_from(tile, neighbor))
-            .collect()
+        let (w, h) = (self.width, self.height);
+        if x >= w || y >= h {
+            return out;
+        }
+        let map = &self.map;
+        // Tile at the given offset; out-of-bounds reads as an obstacle.
+        let at = |dx: isize, dy: isize| -> char {
+            let nx = x.wrapping_add_signed(dx);
+            let ny = y.wrapping_add_signed(dy);
+            if nx < w && ny < h {
+                map[ny * w + nx]
+            } else {
+                '@'
+            }
+        };
+        let c = map[y * w + x];
+        let (e, wst, s, n) = (at(1, 0), at(-1, 0), at(0, 1), at(0, -1));
+        if step_ok(e, c) {
+            out.push((x + 1, y));
+        }
+        if step_ok(wst, c) {
+            out.push((x - 1, y));
+        }
+        if step_ok(s, c) {
+            out.push((x, y + 1));
+        }
+        if step_ok(n, c) {
+            out.push((x, y - 1));
+        }
+        if self.map_type == MapType::Octile {
+            let mut diag = |dx: isize, dy: isize, a: char, b: char| {
+                // `a` = (x, y+dy) and `b` = (x+dx, y) are the two cardinal
+                // intermediates: a diagonal is allowed only if both two-step
+                // cardinal paths are, so that no corner is cut.
+                if step_ok(a, c) && step_ok(b, c) {
+                    let t = at(dx, dy);
+                    if step_ok(t, a) && step_ok(t, b) {
+                        out.push((x.wrapping_add_signed(dx), y.wrapping_add_signed(dy)));
+                    }
+                }
+            };
+            diag(1, 1, s, e);
+            diag(1, -1, n, e);
+            diag(-1, 1, s, wst);
+            diag(-1, -1, n, wst);
+        }
+        out
     }
 }
 
