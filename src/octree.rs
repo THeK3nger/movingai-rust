@@ -62,7 +62,7 @@ impl Octree3D {
         }
 
         let local_coords = self.to_local_coords(coords);
-        Self::set_voxel_recursive(&mut self.root, local_coords, state, 0, 0, 0, self.size);
+        Self::set_voxel_recursive(&mut self.root, local_coords, state, self.size);
         true
     }
 
@@ -177,6 +177,34 @@ impl Octree3D {
                 OctreeNode::Internal { children } => {
                     node = &children[Self::oct(c, half)];
                     half >>= 1;
+                }
+            }
+        }
+    }
+
+    /// Recursively sets the voxel at local coordinates `c`.
+    fn set_voxel_recursive(node: &mut OctreeNode, c: Coords3D, state: VoxelState, node_size: i32) {
+        match node {
+            OctreeNode::Leaf { state: cur } => {
+                if *cur == state {
+                    return;
+                }
+                if node_size == 1 {
+                    *cur = state;
+                    return;
+                }
+                let children = Self::create_children(*cur);
+                *node = OctreeNode::Internal { children };
+                Self::set_voxel_recursive(node, c, state, node_size);
+            }
+            OctreeNode::Internal { children } => {
+                let half = node_size >> 1;
+                let o = Self::oct(c, half);
+                Self::set_voxel_recursive(&mut children[o], c, state, half);
+                // The node can only collapse if the child ended up as a leaf
+                // with the state that was just written.
+                if matches!(children[o], OctreeNode::Leaf { state: s } if s == state) {
+                    Self::try_collapse(node);
                 }
             }
         }
@@ -351,57 +379,6 @@ impl Octree3D {
         (x - min_x, y - min_y, z - min_z)
     }
 
-    /// Recursively sets a voxel in the octree.
-    fn set_voxel_recursive(
-        node: &mut OctreeNode,
-        coords: Coords3D,
-        state: VoxelState,
-        node_x: i32,
-        node_y: i32,
-        node_z: i32,
-        node_size: i32,
-    ) {
-        match node {
-            OctreeNode::Leaf {
-                state: current_state,
-            } => {
-                if *current_state != state {
-                    if node_size == 1 {
-                        *current_state = state;
-                    } else {
-                        // Split the leaf into 8 children
-                        let children = Self::create_children(*current_state);
-                        *node = OctreeNode::Internal { children };
-                        Self::set_voxel_recursive(
-                            node, coords, state, node_x, node_y, node_z, node_size,
-                        );
-                    }
-                }
-            }
-            OctreeNode::Internal { children } => {
-                let half_size = node_size / 2;
-                let (x, y, z) = coords;
-
-                let octant = Self::get_octant(x, y, z, node_x, node_y, node_z, half_size);
-                let (child_x, child_y, child_z) =
-                    Self::get_child_origin(octant, node_x, node_y, node_z, half_size);
-
-                Self::set_voxel_recursive(
-                    &mut children[octant],
-                    coords,
-                    state,
-                    child_x,
-                    child_y,
-                    child_z,
-                    half_size,
-                );
-
-                // Try to collapse the node if all children have the same state
-                Self::try_collapse(node);
-            }
-        }
-    }
-
     /// Creates 8 children nodes with the given state.
     fn create_children(state: VoxelState) -> Box<[OctreeNode; 8]> {
         Box::new([
@@ -414,29 +391,6 @@ impl Octree3D {
             OctreeNode::Leaf { state },
             OctreeNode::Leaf { state },
         ])
-    }
-
-    /// Determines which octant a coordinate belongs to.
-    fn get_octant(
-        x: i32,
-        y: i32,
-        z: i32,
-        node_x: i32,
-        node_y: i32,
-        node_z: i32,
-        half_size: i32,
-    ) -> usize {
-        let mut octant = 0;
-        if x >= node_x + half_size {
-            octant |= 1;
-        }
-        if y >= node_y + half_size {
-            octant |= 2;
-        }
-        if z >= node_z + half_size {
-            octant |= 4;
-        }
-        octant
     }
 
     /// Gets the origin coordinates of a child node.
