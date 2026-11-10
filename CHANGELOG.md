@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-11-10
+
 ### Improvements
 
 - This new version adds some relevant performance improvements by avoiding recursion and unnecessary boundary checks while scanning a 2D map or descending into an octree. In particular:
