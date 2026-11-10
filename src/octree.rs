@@ -79,7 +79,7 @@ impl Octree3D {
         }
 
         let local_coords = self.to_local_coords(coords);
-        Some(self.get_voxel_recursive(&self.root, local_coords, 0, 0, 0, self.size))
+        Some(Self::lookup(&self.root, self.size, local_coords))
     }
 
     /// Gets the states of all 26 neighboring voxels around the given coordinates.
@@ -153,6 +153,33 @@ impl Octree3D {
             }
         }
         neighbors
+    }
+
+    /// Returns the octant of `c` inside a node whose half size is `half`.
+    ///
+    /// Node sizes are powers of two, so the octant is given by one bit per axis
+    /// of the local coordinates.
+    #[inline]
+    fn oct(c: Coords3D, half: i32) -> usize {
+        ((c.0 & half != 0) as usize)
+            | (((c.1 & half != 0) as usize) << 1)
+            | (((c.2 & half != 0) as usize) << 2)
+    }
+
+    /// Returns the state of the voxel at local coordinates `c`, descending
+    /// from `node` (a node of side `size` that contains `c`).
+    #[inline]
+    fn lookup(mut node: &OctreeNode, size: i32, c: Coords3D) -> VoxelState {
+        let mut half = size >> 1;
+        loop {
+            match node {
+                OctreeNode::Leaf { state } => return *state,
+                OctreeNode::Internal { children } => {
+                    node = &children[Self::oct(c, half)];
+                    half >>= 1;
+                }
+            }
+        }
     }
 
     fn neighborhood_states(&self, coords: Coords3D) -> [Option<VoxelState>; 27] {
@@ -339,38 +366,6 @@ impl Octree3D {
 
                 // Try to collapse the node if all children have the same state
                 Self::try_collapse(node);
-            }
-        }
-    }
-
-    /// Recursively gets a voxel state from the octree.
-    fn get_voxel_recursive(
-        &self,
-        node: &OctreeNode,
-        coords: Coords3D,
-        node_x: i32,
-        node_y: i32,
-        node_z: i32,
-        node_size: i32,
-    ) -> VoxelState {
-        match node {
-            OctreeNode::Leaf { state } => *state,
-            OctreeNode::Internal { children } => {
-                let half_size = node_size / 2;
-                let (x, y, z) = coords;
-
-                let octant = Self::get_octant(x, y, z, node_x, node_y, node_z, half_size);
-                let (child_x, child_y, child_z) =
-                    Self::get_child_origin(octant, node_x, node_y, node_z, half_size);
-
-                self.get_voxel_recursive(
-                    &children[octant],
-                    coords,
-                    child_x,
-                    child_y,
-                    child_z,
-                    half_size,
-                )
             }
         }
     }
