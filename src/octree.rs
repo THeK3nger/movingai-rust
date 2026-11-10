@@ -182,14 +182,46 @@ impl Octree3D {
         }
     }
 
+    /// Returns the states of the 3x3x3 block centered on `coords` (which must
+    /// be within bounds). Out-of-bounds entries are `None`.
     fn neighborhood_states(&self, coords: Coords3D) -> [Option<VoxelState>; 27] {
         let mut states = [None; 27];
+        let (lx, ly, lz) = self.to_local_coords(coords);
+        let m = self.size - 1;
+        let lo = ((lx - 1).max(0), (ly - 1).max(0), (lz - 1).max(0));
+        let hi = ((lx + 1).min(m), (ly + 1).min(m), (lz + 1).min(m));
+        // Descend once to the smallest node containing the whole block, so
+        // the per-voxel lookups start there instead of at the root.
+        let mut node = &self.root;
+        let mut half = self.size >> 1;
+        while let OctreeNode::Internal { children } = node {
+            let o = Self::oct(lo, half);
+            if o != Self::oct(hi, half) {
+                break;
+            }
+            node = &children[o];
+            half >>= 1;
+        }
+        let uniform = match node {
+            OctreeNode::Leaf { state } => Some(*state),
+            _ => None,
+        };
+        let node_size = half << 1;
         for dx in -1..=1 {
             for dy in -1..=1 {
                 for dz in -1..=1 {
-                    if let Some(neighbor) = Self::offset_coords(coords, dx, dy, dz) {
-                        states[Self::neighborhood_index(dx, dy, dz)] = self.get_voxel(neighbor);
+                    let c = (lx + dx, ly + dy, lz + dz);
+                    if c.0 < lo.0
+                        || c.0 > hi.0
+                        || c.1 < lo.1
+                        || c.1 > hi.1
+                        || c.2 < lo.2
+                        || c.2 > hi.2
+                    {
+                        continue;
                     }
+                    states[Self::neighborhood_index(dx, dy, dz)] =
+                        Some(uniform.unwrap_or_else(|| Self::lookup(node, node_size, c)));
                 }
             }
         }
