@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Improvements
+
+- This new version adds some relevant performance improvements by avoiding recursion and unnecessary boundary checks while scanning a 2D map or descending into an octree. In particular:
+    - `neighbors` invocations are now ~5 times faster. And `neighbors` is used a lot in pathfinding algorithms.
+    - `neighbors` invocations are also ~3 times faster in 3D maps. This has been achieved by switching to bitmap checking.
+    - `is_traversable_from` is also ~3 times faster on average (actually, we improved `neighbors` by using `is_traversable_from`).
+    -  As a consequence, also parsing got a bit faster (about 17%).
+
 ## [3.0.2] - 2026-11-09
 
 ### Changed
